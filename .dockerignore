@@ -1,0 +1,7 @@
+node_modules
+.git
+.env
+.env.*
+*.tgz
+__tests__
+coverage

@@ -1,0 +1,106 @@
+{
+  "form": {
+    "id": "5a8e25ee-43c7-4ff3-b3e2-da0888fed2e2",
+    "name": "default",
+    "label": "TESTMCP"
+  },
+  "fields": [
+    {
+      "name": "nome",
+      "label": "Nome",
+      "field_type": "text",
+      "value_shape": "string",
+      "required": true,
+      "readonly": false,
+      "order": 10,
+      "instructions": null,
+      "input": { "mode": "none" }
+    },
+    {
+      "name": "data_inizio",
+      "label": "Data inizio",
+      "field_type": "date",
+      "value_shape": "string",
+      "required": true,
+      "readonly": false,
+      "order": 20,
+      "instructions": null,
+      "input": { "mode": "none" }
+    },
+    {
+      "name": "data_fine",
+      "label": "Data fine",
+      "field_type": "date",
+      "value_shape": "string",
+      "required": false,
+      "readonly": false,
+      "order": 30,
+      "instructions": null,
+      "input": { "mode": "none" }
+    },
+    {
+      "name": "stato",
+      "label": "Stato",
+      "field_type": "text",
+      "value_shape": "string",
+      "required": false,
+      "readonly": false,
+      "order": 40,
+      "instructions": null,
+      "input": {
+        "mode": "fixed_list",
+        "options": [
+          { "value": "In corso", "label": "In corso" },
+          { "value": "Completato", "label": "Completato" },
+          { "value": "Sospeso", "label": "Sospeso" }
+        ]
+      }
+    },
+    {
+      "name": "budget",
+      "label": "Budget",
+      "field_type": "number",
+      "value_shape": "number",
+      "required": false,
+      "readonly": false,
+      "order": 50,
+      "instructions": null,
+      "input": { "mode": "none" }
+    },
+    {
+      "name": "calcolato",
+      "label": "Calcolato",
+      "field_type": "text",
+      "value_shape": "string",
+      "required": false,
+      "readonly": false,
+      "order": 60,
+      "instructions": null,
+      "server_filled": "computed",
+      "input": { "mode": "none" }
+    },
+    {
+      "name": "solo_lettura",
+      "label": "Solo lettura",
+      "field_type": "text",
+      "value_shape": "string",
+      "required": false,
+      "readonly": true,
+      "order": 70,
+      "instructions": null,
+      "input": { "mode": "none" }
+    },
+    {
+      "name": "link_nm",
+      "label": "Tabella link",
+      "field_type": "relation",
+      "value_shape": "uuid[]",
+      "required": false,
+      "readonly": false,
+      "order": 80,
+      "instructions": null,
+      "input": { "mode": "relation", "storage": "through" }
+    }
+  ],
+  "document_slots": []
+}

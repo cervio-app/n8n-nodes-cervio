@@ -1,0 +1,58 @@
+{
+  "name": "n8n-nodes-cervio",
+  "version": "0.2.0",
+  "description": "n8n community node for Cervio — records, views, documents, N:M links, upsert/resolve, workflows (REST /api/v1)",
+  "license": "MIT",
+  "homepage": "https://cervio.app",
+  "keywords": [
+    "n8n-community-node-package",
+    "n8n",
+    "cervio"
+  ],
+  "author": {
+    "name": "Cervio",
+    "email": "infra@cervio.app"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cervio-app/n8n-nodes-cervio.git"
+  },
+  "bugs": {
+    "url": "https://github.com/cervio-app/n8n-nodes-cervio/issues"
+  },
+  "scripts": {
+    "build": "tsc && node scripts/copy-icons.mjs",
+    "build:watch": "tsc --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "smoke": "node scripts/smoke.mjs",
+    "smoke:relations": "node scripts/smoke-relations.mjs",
+    "smoke:extended": "node scripts/smoke-extended.mjs",
+    "verify": "node scripts/verify-node-load.mjs",
+    "lint": "tsc --noEmit"
+  },
+  "files": [
+    "dist"
+  ],
+  "n8n": {
+    "n8nNodesApiVersion": 1,
+    "credentials": [
+      "dist/credentials/CervioApi.credentials.js"
+    ],
+    "nodes": [
+      "dist/nodes/Cervio/Cervio.node.js"
+    ]
+  },
+  "devDependencies": {
+    "typescript": "5.9.3",
+    "vitest": "^3.2.4"
+  },
+  "peerDependencies": {
+    "n8n-workflow": "*"
+  },
+  "peerDependenciesMeta": {
+    "n8n-workflow": {
+      "optional": true
+    }
+  }
+}

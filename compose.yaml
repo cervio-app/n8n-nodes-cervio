@@ -1,0 +1,19 @@
+services:
+  n8n:
+    image: n8nio/n8n:latest
+    ports:
+      - '5678:5678'
+    environment:
+      - N8N_DIAGNOSTICS_ENABLED=false
+      - N8N_PERSONALIZATION_ENABLED=false
+      - N8N_ENCRYPTION_KEY=cervio-n8n-nodes-dev-key
+      - N8N_CUSTOM_EXTENSIONS=/home/node/custom-nodes/n8n-nodes-cervio
+      - N8N_COMMUNITY_PACKAGES_ENABLED=true
+      - N8N_UNVERIFIED_PACKAGES_ENABLED=true
+      - GENERIC_TIMEZONE=Europe/Rome
+    volumes:
+      - n8n_data:/home/node/.n8n
+      - ./:/home/node/custom-nodes/n8n-nodes-cervio:ro
+
+volumes:
+  n8n_data:
