@@ -7,6 +7,26 @@ updates:
     open-pull-requests-limit: 10
     labels:
       - dependencies
+    # Keep majors that break peers out of the queue until the ecosystem catches up:
+    # - typescript-eslint 8.x requires typescript < 6.1
+    # - @n8n/eslint-plugin-community-nodes peers eslint@9.29.0
+    ignore:
+      - dependency-name: typescript
+        update-types: ['version-update:semver-major']
+      - dependency-name: eslint
+        update-types: ['version-update:semver-major']
+    groups:
+      eslint-stack:
+        patterns:
+          - 'eslint'
+          - '@eslint/*'
+          - 'typescript-eslint'
+          - '@typescript-eslint/*'
+          - '@n8n/eslint-plugin-community-nodes'
+      test-stack:
+        patterns:
+          - 'vitest'
+          - '@vitest/*'
 
   - package-ecosystem: github-actions
     directory: /
@@ -15,3 +35,7 @@ updates:
     open-pull-requests-limit: 5
     labels:
       - dependencies
+    groups:
+      github-actions:
+        patterns:
+          - '*'
