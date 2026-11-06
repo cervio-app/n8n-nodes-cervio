@@ -120,7 +120,8 @@ jobs:
             fi
             unset NODE_AUTH_TOKEN || true
           fi
-          # Provenance is automatic with Trusted Publishing; flag kept for clarity.
-          npm publish --access public --provenance
+          # Provenance attestations require a *public* GitHub source repo.
+          # This package repo is private → disable provenance; OIDC publish still works.
+          NPM_CONFIG_PROVENANCE=false npm publish --access public
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
