@@ -56,9 +56,9 @@ Keep these three equal for every release:
 
 | Source | Example |
 |--------|---------|
-| `package.json` `version` | `0.2.2` |
-| Annotated git tag | `v0.2.2` |
-| npm `@cervio/n8n-nodes-cervio` | `0.2.2` |
+| `package.json` `version` | `0.2.4` |
+| Annotated git tag | `v0.2.4` |
+| npm `@cervio/n8n-nodes-cervio` | `0.2.4` |
 
 - Never move or delete a published `v*` tag
 - Pushing a `v*.*.*` tag runs [.github/workflows/publish.yml](./.github/workflows/publish.yml) (npm Trusted Publishing via OIDC + provenance, then GitHub Release). If that version is already on npm, the job skips publish and still ensures a GitHub Release exists.

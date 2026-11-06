@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.4] - 2026-11-06
+
+### Added
+
+- Node `typeVersion` **1** (flat operations, existing workflows) and **2** (Resource + Operation).
+- `assertSafeCervioBaseUrl` — reject link-local / cloud-metadata Base URLs.
+- Community invariant verifier (`scripts/verify-community-invariants.mjs`) for pairedItem / no open JSON / resource grouping (covers what ESLint cannot see after the module split).
+- Coverage gates on focused modules; CI `eslint --max-warnings 0`.
+- Domain split: `description/{operations,sharedFields}`, `execute/{batchOps,records,documents,relations,workflows}`.
+- Expanded unit tests (HTTP mocks, create, base URL, resource map).
+
+### Changed
+
+- `workflowData` is a typed fixedCollection (name/value), not free-form JSON.
+- Compose / Dockerfile pin `n8nio/n8n:2.47.2`; Dockerfile uses `N8N_CUSTOM_EXTENSIONS` only.
+
 ## [0.2.3] - 2026-11-06
 
 ### Added
@@ -44,7 +60,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Scoped package `@cervio/n8n-nodes-cervio`; unscoped name deprecated.
 
-[Unreleased]: https://github.com/cervio-app/n8n-nodes-cervio/compare/v0.2.3...HEAD
+[Unreleased]: https://github.com/cervio-app/n8n-nodes-cervio/compare/v0.2.4...HEAD
+[0.2.4]: https://github.com/cervio-app/n8n-nodes-cervio/releases/tag/v0.2.4
 [0.2.3]: https://github.com/cervio-app/n8n-nodes-cervio/releases/tag/v0.2.3
 [0.2.2]: https://github.com/cervio-app/n8n-nodes-cervio/releases/tag/v0.2.2
 [0.2.1]: https://github.com/cervio-app/n8n-nodes-cervio/releases/tag/v0.2.1

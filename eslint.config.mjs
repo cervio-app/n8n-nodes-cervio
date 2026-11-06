@@ -46,12 +46,23 @@ export default tseslint.config(
 			'@n8n/community-nodes/no-forbidden-lifecycle-scripts': 'error',
 			'@n8n/community-nodes/no-overrides-field': 'error',
 			'@n8n/community-nodes/no-runtime-dependencies': 'error',
-			'@n8n/community-nodes/require-files-array': 'warn',
-			'@n8n/community-nodes/require-homepage': 'warn',
+			'@n8n/community-nodes/require-files-array': 'error',
+			'@n8n/community-nodes/require-homepage': 'error',
 			'@n8n/community-nodes/valid-author': 'error',
 			'@n8n/community-nodes/valid-description': 'error',
 			'@n8n/community-nodes/valid-peer-dependencies': 'error',
 			'@n8n/community-nodes/ai-node-package-json': 'error',
+		},
+	},
+	{
+		files: ['**/*.node.json'],
+		plugins: {
+			json,
+			...n8nCommunityNodesPlugin.configs.recommended.plugins,
+		},
+		language: 'json/json',
+		rules: {
+			'@n8n/community-nodes/valid-node-categories': 'error',
 		},
 	},
 );

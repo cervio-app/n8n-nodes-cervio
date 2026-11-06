@@ -27,7 +27,7 @@ export class CervioApi implements ICredentialType {
 			placeholder: 'https://tenant.cervio.app',
 			required: true,
 			description:
-				'Cervio tenant URL without a trailing slash (e.g. https://acme.cervio.app). Required for every credential.',
+				'Cervio tenant URL without a trailing slash (e.g. https://acme.cervio.app). http/https only; link-local and cloud-metadata hosts are rejected.',
 		},
 		{
 			displayName: 'Personal Access Token',

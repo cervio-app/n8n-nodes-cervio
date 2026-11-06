@@ -1,6 +1,7 @@
 services:
   n8n:
-    image: n8nio/n8n:latest
+    # Pin to a released n8n version (bump deliberately; do not use :latest).
+    image: n8nio/n8n:2.47.2
     ports:
       - '5678:5678'
     environment:

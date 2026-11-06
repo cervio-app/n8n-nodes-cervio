@@ -37,6 +37,12 @@ const cred = new CervioApi();
 if (cred.displayName !== 'Cervio API') throw new Error('credential displayName');
 if (!cred.test?.request?.url?.includes('/api/v1/me')) throw new Error('credential test URL');
 
+const ver = node.description.version;
+const verArr = Array.isArray(ver) ? ver : [ver];
+if (!verArr.includes(1) || !verArr.includes(2)) {
+	throw new Error(`expected node version to include 1 and 2, got ${JSON.stringify(ver)}`);
+}
+
 const ALL_OPERATIONS = [
 	'create',
 	'update',
@@ -59,7 +65,9 @@ const ALL_OPERATIONS = [
 ];
 
 const opProps = node.description.properties.filter((p) => p.name === 'operation');
-const values = opProps.flatMap((p) => (p.options || []).map((o) => o.value));
+const values = [
+	...new Set(opProps.flatMap((p) => (p.options || []).map((o) => o.value))),
+];
 for (const need of ALL_OPERATIONS) {
 	if (!values.includes(need)) throw new Error(`missing operation ${need}`);
 }
@@ -67,8 +75,12 @@ const resource = node.description.properties.find((p) => p.name === 'resource');
 if (!resource?.options?.some((o) => o.value === 'record')) {
 	throw new Error('missing resource parameter');
 }
+const resourceV2 = resource.displayOptions?.show?.['@version'];
+if (!Array.isArray(resourceV2) || !resourceV2.includes(2)) {
+	throw new Error('resource should be shown for node version 2');
+}
 if (opProps.length < 4) {
-	throw new Error(`expected 4 operation groups by resource, got ${opProps.length}`);
+	throw new Error(`expected at least 4 operation groups by resource, got ${opProps.length}`);
 }
 
 const mappers = node.description.properties.filter((p) => p.type === 'resourceMapper');

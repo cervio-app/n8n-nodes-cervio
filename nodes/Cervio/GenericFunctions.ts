@@ -9,11 +9,9 @@ import type {
 } from 'n8n-workflow';
 import { NodeApiError } from 'n8n-workflow';
 
-type CervioContext = IExecuteFunctions | ILoadOptionsFunctions | IHookFunctions;
+import { assertSafeCervioBaseUrl } from './baseUrl';
 
-function normalizeBaseUrl(baseUrl: string): string {
-	return baseUrl.replace(/\/+$/, '');
-}
+type CervioContext = IExecuteFunctions | ILoadOptionsFunctions | IHookFunctions;
 
 export async function cervioApiRequest(
 	this: CervioContext,
@@ -23,10 +21,12 @@ export async function cervioApiRequest(
 	qs: IDataObject = {},
 ): Promise<unknown> {
 	const credentials = await this.getCredentials('cervioApi');
-	const baseUrl = normalizeBaseUrl(String(credentials.baseUrl ?? ''));
-	if (!baseUrl) {
+	let baseUrl: string;
+	try {
+		baseUrl = assertSafeCervioBaseUrl(String(credentials.baseUrl ?? ''));
+	} catch (error) {
 		throw new NodeApiError(this.getNode(), {
-			message: 'Cervio credential Base URL is missing',
+			message: error instanceof Error ? error.message : String(error),
 		} as JsonObject);
 	}
 
@@ -235,10 +235,12 @@ export async function cervioApiRequestMultipart(
 	body: FormData,
 ): Promise<unknown> {
 	const credentials = await this.getCredentials('cervioApi');
-	const baseUrl = normalizeBaseUrl(String(credentials.baseUrl ?? ''));
-	if (!baseUrl) {
+	let baseUrl: string;
+	try {
+		baseUrl = assertSafeCervioBaseUrl(String(credentials.baseUrl ?? ''));
+	} catch (error) {
 		throw new NodeApiError(this.getNode(), {
-			message: 'Cervio credential Base URL is missing',
+			message: error instanceof Error ? error.message : String(error),
 		} as JsonObject);
 	}
 

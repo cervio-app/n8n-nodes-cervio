@@ -58,13 +58,15 @@ npm link @cervio/n8n-nodes-cervio
 
 ### Docker Compose (local n8n)
 
-Uses [`compose.yaml`](./compose.yaml) to run n8n with this package linked:
+Uses [`compose.yaml`](./compose.yaml) with a **pinned** `n8nio/n8n` image and this package bind-mounted via `N8N_CUSTOM_EXTENSIONS`:
 
 ```bash
 npm run build
 docker compose -f compose.yaml up
 # → http://localhost:5678
 ```
+
+Optional image bake: [`Dockerfile`](./Dockerfile) (same pin, `N8N_CUSTOM_EXTENSIONS=/opt/n8n-nodes-cervio` only).
 
 Live API smoke scripts (`npm run smoke*`) are separate — see [CONTRIBUTING.md](./CONTRIBUTING.md).
 
@@ -74,14 +76,19 @@ Create a **Cervio API** credential in n8n:
 
 | Field | Example | Notes |
 |-------|---------|--------|
-| **Base URL** | `https://acme.cervio.app` | Tenant host only — required, no default |
+| **Base URL** | `https://acme.cervio.app` | Tenant host only — required, no default. Must be `http`/`https`. Link-local / cloud-metadata hosts (`169.254.0.0/16`, `metadata.google.internal`, …) are rejected. |
 | **Personal Access Token** | `cpat_…` | From Cervio **Admin → API** |
 
 All operations use this credential.
 
 ## Operations
 
-Pick a **Resource**, then an **Operation** (operation values are stable across releases).
+**Node typeVersion 2 (default for new nodes):** pick a **Resource**, then an **Operation**.  
+**TypeVersion 1 (existing workflows):** flat Operation list — no Resource field; keep working as before. Upgrade the node in the editor when you want Resource grouping.
+
+Operation **values** (`create`, `listView`, …) are stable across versions.
+
+Pick a **Resource**, then an **Operation** (on v2):
 
 | Resource | Operation | Description |
 |----------|-----------|-------------|
@@ -140,9 +147,10 @@ The PAT impersonates its owner (entity permissions, record policies, field denia
 
 | | |
 |--|--|
-| n8n | Community nodes API v1 (`n8nNodesApiVersion: 1`) |
-| Node.js | ≥ 20 (build / smoke) |
+| n8n | Community nodes API v1 (`n8nNodesApiVersion: 1`); local Compose pin `n8nio/n8n:2.47.2` |
+| Node.js | ≥ 20 (build / smoke); CI uses Node 22 |
 | Cervio | Tenant with `/api/v1` and External API enabled |
+| Node typeVersion | `1` (flat ops) and `2` (Resource + ops) |
 
 ## Development
 

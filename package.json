@@ -1,6 +1,6 @@
 {
   "name": "@cervio/n8n-nodes-cervio",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "n8n community node for Cervio — entity records, documents, N:M links, and workflows via REST /api/v1",
   "license": "MIT",
   "homepage": "https://github.com/cervio-app/n8n-nodes-cervio#readme",
@@ -33,14 +33,15 @@
     "build:watch": "tsc --watch",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
     "smoke": "node scripts/smoke.mjs",
     "smoke:relations": "node scripts/smoke-relations.mjs",
     "smoke:extended": "node scripts/smoke-extended.mjs",
-    "verify": "node scripts/verify-node-load.mjs",
+    "verify": "node scripts/verify-node-load.mjs && node scripts/verify-community-invariants.mjs",
     "lint": "npm run lint:tsc && npm run lint:eslint",
     "lint:tsc": "tsc --noEmit",
-    "lint:eslint": "eslint .",
-    "prepublishOnly": "npm run lint && npm run build && npm test && npm run verify"
+    "lint:eslint": "eslint . --max-warnings 0",
+    "prepublishOnly": "npm run lint && npm run build && npm run test:coverage && npm run verify"
   },
   "files": [
     "dist",
@@ -58,6 +59,7 @@
   "devDependencies": {
     "@eslint/json": "^2.1.1",
     "@n8n/eslint-plugin-community-nodes": "^1.0.1",
+    "@vitest/coverage-v8": "^5.1.0",
     "eslint": "^9.29.0",
     "n8n-workflow": "^2.16.0",
     "typescript": "5.9.3",

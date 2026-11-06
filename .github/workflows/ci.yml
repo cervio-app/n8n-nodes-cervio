@@ -25,14 +25,14 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Lint (tsc + eslint)
+      - name: Lint (tsc + eslint --max-warnings 0)
         run: npm run lint
 
       - name: Build
         run: npm run build
 
-      - name: Unit tests
-        run: npm test
+      - name: Unit tests with coverage gates
+        run: npm run test:coverage
 
-      - name: Verify node load
+      - name: Verify node load + community invariants
         run: npm run verify

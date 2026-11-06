@@ -164,6 +164,76 @@ export async function buildMapperFields(
 	return { fields };
 }
 
+/**
+ * Build payload for workflow start from fixedCollection (values: name/value rows).
+ * Legacy string JSON from older workflows is still accepted when valid.
+ */
+export function parseWorkflowDataPayload(
+	ctx: IExecuteFunctions,
+	raw: unknown,
+	itemIndex: number,
+): IDataObject | undefined {
+	if (raw == null || raw === '') return undefined;
+
+	if (typeof raw === 'string') {
+		const trimmed = raw.trim();
+		if (!trimmed) return undefined;
+		let parsed: unknown;
+		try {
+			parsed = JSON.parse(trimmed) as unknown;
+		} catch {
+			throw new NodeOperationError(
+				ctx.getNode(),
+				'Invalid Additional Data: expected valid JSON object.',
+				{ itemIndex },
+			);
+		}
+		if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+			throw new NodeOperationError(
+				ctx.getNode(),
+				'Additional Data must be a JSON object.',
+				{ itemIndex },
+			);
+		}
+		return parsed as IDataObject;
+	}
+
+	if (typeof raw !== 'object') return undefined;
+
+	const obj = raw as IDataObject;
+	const valuesRaw = obj.values;
+	const list = Array.isArray(valuesRaw)
+		? valuesRaw
+		: valuesRaw
+			? [valuesRaw]
+			: [];
+
+	const out: IDataObject = {};
+	for (const row of list) {
+		if (!row || typeof row !== 'object') continue;
+		const name = String((row as { name?: unknown }).name ?? '').trim();
+		const value = (row as { value?: unknown }).value;
+		const hasValue =
+			value !== undefined &&
+			value !== '' &&
+			!(typeof value === 'string' && !value.trim());
+		if (!name) {
+			if (hasValue) {
+				throw new NodeOperationError(
+					ctx.getNode(),
+					'Each Additional Data row must have a name.',
+					{ itemIndex },
+				);
+			}
+			continue;
+		}
+		out[name] = value as IDataObject[string];
+	}
+
+	if (Object.keys(out).length === 0) return undefined;
+	return out;
+}
+
 export function parseMultiValueModes(
 	raw: unknown,
 ): Record<string, 'add' | 'replace' | 'remove'> | undefined {
