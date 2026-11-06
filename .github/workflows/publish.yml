@@ -1,14 +1,17 @@
-# Publishes @cervio/n8n-nodes-cervio to npm with provenance on annotated v* tags.
+# Publishes @cervio/n8n-nodes-cervio to npm via Trusted Publishing (OIDC).
 #
 # Tag convention: vX.Y.Z must match package.json "version".
 #
-# One-time setup (OIDC — preferred):
-# 1. npmjs.com → @cervio/n8n-nodes-cervio → Settings → Trusted Publishers
-#    GitHub Actions: owner cervio-app, repo n8n-nodes-cervio, workflow publish.yml
-# 2. Or set repo secret NPM_TOKEN (Automation / classic publish token) as fallback
+# npm Trusted Publisher (package Settings → Trusted Publishers):
+#   Organization or user: cervio-app
+#   Repository: n8n-nodes-cervio
+#   Workflow filename: publish.yml
+#   Allowed actions: Allow `npm publish` (required)
+#
+# Requires npm CLI ≥ 11.5.1 for OIDC (see https://docs.npmjs.com/trusted-publishers).
 #
 # Release:
-#   npm version patch|minor|major   # bumps package.json + creates commit + tag
+#   npm version patch|minor|major
 #   git push origin main --follow-tags
 #   gh release create vX.Y.Z --generate-notes
 
@@ -21,12 +24,12 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: 'Git tag to check out and publish (e.g. v0.2.1). Empty = current default branch HEAD.'
+        description: 'Git tag to check out and publish (e.g. v0.2.2). Empty = current default branch HEAD.'
         required: false
         default: ''
 
 permissions:
-  id-token: write
+  id-token: write # required for OIDC Trusted Publishing
   contents: read
 
 jobs:
@@ -41,9 +44,17 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
+          # Trusted Publishing needs Node ≥ 22.14 and npm ≥ 11.5.1
           node-version: '22'
-          cache: 'npm'
           registry-url: 'https://registry.npmjs.org'
+          cache: 'npm'
+
+      - name: Upgrade npm for Trusted Publishing (OIDC)
+        run: |
+          set -euo pipefail
+          npm install -g npm@^11.5.1
+          node -v
+          npm -v
 
       - name: Install dependencies
         run: npm ci
@@ -97,16 +108,19 @@ jobs:
         if: steps.existing.outputs.exists != 'true'
         run: |
           set -euo pipefail
-          # setup-node writes an empty _authToken when NODE_AUTH_TOKEN is unset;
-          # that breaks Trusted Publishing (OIDC). Prefer OIDC; use NPM_TOKEN only if set.
+          # Do not set NODE_AUTH_TOKEN — OIDC Trusted Publishing handles auth.
+          # Strip empty _authToken written by setup-node when the secret is absent.
           if [ -n "${NPM_TOKEN:-}" ]; then
             npm config set "//registry.npmjs.org/:_authToken=${NPM_TOKEN}"
           else
             if [ -n "${NPM_CONFIG_USERCONFIG:-}" ] && [ -f "${NPM_CONFIG_USERCONFIG}" ]; then
               sed -i '/_authToken/d' "${NPM_CONFIG_USERCONFIG}"
+              echo "npmrc after strip:"
+              cat "${NPM_CONFIG_USERCONFIG}" || true
             fi
             unset NODE_AUTH_TOKEN || true
           fi
+          # Provenance is automatic with Trusted Publishing; flag kept for clarity.
           npm publish --access public --provenance
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
