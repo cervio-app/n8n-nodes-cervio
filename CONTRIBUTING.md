@@ -35,30 +35,34 @@ Examples: `feat: add upsert record operation`, `fix: coerce relation id on updat
 
 ## Versioning and tags
 
-- SemVer in `package.json`
-- Annotated git tags: `vX.Y.Z` (same number as the package)
-- Tag only for a release; never move or delete a published `v*` tag
+Keep these three equal for every release:
+
+| Source | Example |
+|--------|---------|
+| `package.json` `version` | `0.2.1` |
+| Annotated git tag | `v0.2.1` |
+| npm `@cervio/n8n-nodes-cervio` | `0.2.1` |
+
+- Never move or delete a published `v*` tag
+- Pushing a `v*.*.*` tag runs [.github/workflows/publish.yml](./.github/workflows/publish.yml) (npm publish with provenance). If that version is already on npm, the job skips publish.
 
 ### Cut a release
 
 ```bash
-# bump package.json → commit
-git commit -am "chore(release): v0.3.0"
-git tag -a v0.3.0 -m "v0.3.0"
+# from a clean main, after features are merged
+npm version patch   # or minor / major — bumps package.json, commits, tags vX.Y.Z
 git push origin main --follow-tags
-gh release create v0.3.0 --generate-notes
-
-# npm: after Trusted Publishing is set on npmjs.com for this repo,
-# uncomment push.tags in .github/workflows/publish.yml
-# or run Actions → Publish → workflow_dispatch with tag v0.3.0
-
-npm publish --access public
+gh release create "v$(node -p "require('./package.json').version")" --generate-notes
 ```
 
-Published package: [`@cervio/n8n-nodes-cervio`](https://www.npmjs.com/package/@cervio/n8n-nodes-cervio) (`publishConfig.access=public`).
+npm Trusted Publishing (preferred): package settings → Trusted Publishers → GitHub Actions  
+`owner: cervio-app` · `repo: n8n-nodes-cervio` · `workflow: publish.yml`  
+Fallback: repo secret `NPM_TOKEN`.
 
-After the first scoped publish, deprecate the legacy unscoped name:
+Published package: [`@cervio/n8n-nodes-cervio`](https://www.npmjs.com/package/@cervio/n8n-nodes-cervio).
+
+Legacy unscoped name (if still present):
 
 ```bash
-npm deprecate n8n-nodes-cervio "Use @cervio/n8n-nodes-cervio instead"
+npm deprecate n8n-nodes-cervio@"*" "Use @cervio/n8n-nodes-cervio instead"
 ```

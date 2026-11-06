@@ -1,38 +1,29 @@
-# Publishes this community node to npm (with provenance).
+# Publishes @cervio/n8n-nodes-cervio to npm with provenance on annotated v* tags.
 #
-# Tag convention: annotated git tags vX.Y.Z (e.g. v0.2.0), matching package.json.
-#
-# Currently: workflow_dispatch only — enable the `push.tags` trigger below after
-# npm Trusted Publishing (or NPM_TOKEN) is configured, so version tags do not
-# fail Actions before the package exists on the registry.
+# Tag convention: vX.Y.Z must match package.json "version".
 #
 # One-time setup (OIDC — preferred):
-# 1. Create the empty package on npmjs.com (or publish once manually)
-# 2. Package settings → Trusted Publishers → GitHub Actions
-#    owner: cervio-app  repo: n8n-nodes-cervio  workflow: publish.yml
-# 3. Uncomment the `push.tags` block in `on:` below
-# 4. Leave NPM_TOKEN unset (OIDC) — or set secret NPM_TOKEN as fallback
+# 1. npmjs.com → @cervio/n8n-nodes-cervio → Settings → Trusted Publishers
+#    GitHub Actions: owner cervio-app, repo n8n-nodes-cervio, workflow publish.yml
+# 2. Or set repo secret NPM_TOKEN (Automation / classic publish token) as fallback
 #
-# Release process:
-#   1. Bump package.json "version" (SemVer)
-#   2. Commit: chore(release): vX.Y.Z
-#   3. git tag -a vX.Y.Z -m "vX.Y.Z" && git push origin main --follow-tags
-#   4. gh release create vX.Y.Z --generate-notes
-#   5. Run this workflow (dispatch) or let the tag trigger publish when enabled
+# Release:
+#   npm version patch|minor|major   # bumps package.json + creates commit + tag
+#   git push origin main --follow-tags
+#   gh release create vX.Y.Z --generate-notes
 
 name: Publish
 
 on:
+  push:
+    tags:
+      - 'v*.*.*'
   workflow_dispatch:
     inputs:
       tag:
-        description: 'Git tag to check out and publish (e.g. v0.2.0). Empty = current default branch HEAD.'
+        description: 'Git tag to check out and publish (e.g. v0.2.1). Empty = current default branch HEAD.'
         required: false
         default: ''
-  # Uncomment after Trusted Publishing / NPM_TOKEN is configured:
-  # push:
-  #   tags:
-  #     - 'v*.*.*'
 
 permissions:
   id-token: write
@@ -60,13 +51,50 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      - name: Test
+        run: npm test
+
       - name: Build
         run: npm run build
 
       - name: Verify
         run: npm run verify
 
+      - name: Check tag matches package.json
+        run: |
+          set -euo pipefail
+          VERSION="$(node -p "require('./package.json').version")"
+          REF="${GITHUB_REF_NAME:-}"
+          if [[ "${GITHUB_REF:-}" == refs/tags/* ]]; then
+            TAG="$REF"
+          elif [ -n "${{ inputs.tag }}" ]; then
+            TAG="${{ inputs.tag }}"
+          else
+            TAG=""
+          fi
+          if [ -n "$TAG" ]; then
+            EXPECTED="v${VERSION}"
+            if [ "$TAG" != "$EXPECTED" ]; then
+              echo "Tag $TAG does not match package.json version v${VERSION}"
+              exit 1
+            fi
+          fi
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          echo "Publishing @cervio/n8n-nodes-cervio@${VERSION}"
+
+      - name: Skip if version already on npm
+        id: existing
+        run: |
+          set -euo pipefail
+          if npm view "@cervio/n8n-nodes-cervio@${VERSION}" version >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "@cervio/n8n-nodes-cervio@${VERSION} already on npm — skip publish"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Publish
+        if: steps.existing.outputs.exists != 'true'
         run: |
           set -euo pipefail
           if [ -n "${NPM_TOKEN:-}" ]; then
