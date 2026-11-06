@@ -176,38 +176,65 @@ Poll invocation / instance status.
 
 ## Permissions
 
-The node does **not** have its own ACL. Every call is Cervio REST with the PAT: Cervio applies **two layers**.
+There is **no separate “n8n plugin permission”** in Cervio. The community node is only a REST client: every request carries the PAT, and Cervio applies **two independent layers**. Both must allow the action.
 
-### 1. Token scopes (API gate)
+```text
+n8n Cervio node
+      │  Authorization: Bearer cpat_…
+      ▼
+┌─────────────────────────────────────────────────────────┐
+│ 1. Token scopes (Admin → API)                           │
+│    Coarse gate on which /api/v1 families are callable   │
+│    Fail → 401 / scope error (before entity logic)       │
+└───────────────────────────┬─────────────────────────────┘
+                            ▼
+┌─────────────────────────────────────────────────────────┐
+│ 2. User who owns the PAT (impersonation)                │
+│    Same ACL as that user in the Cervio UI               │
+│    Fail → 403 / 404 / empty list / validation errors    │
+└─────────────────────────────────────────────────────────┘
+```
 
-Declared on the PAT in Admin → API. Missing scope → `401` / scope error before any entity logic.
+### Layer 1 — Token scopes (API gate)
 
-| Scope | What it unlocks in this node |
-|-------|------------------------------|
-| `records:read` | Get / list view / search relation / resolve / list documents / open document |
-| `records:write` | Create / update / delete / upsert / validate draft / upload / link / unlink / start workflow |
-| `admin:read` | Form / view / workflow **dropdowns** (`/api/v1/admin/…`), get workflow run status |
-| `admin:write` | Generate document from template (admin route) |
+Set when you create the PAT under **Admin → API**. They only answer: “may this token call this class of routes?”
 
-`*:write` implies the matching `*:read` on Cervio’s API guard.
+| Scope | Roughly opens | Used by these operations |
+|-------|---------------|--------------------------|
+| `records:read` | Data plane reads | Get record, List view, List records, Search relation, Resolve relation, List documents, Open document |
+| `records:write` | Data plane writes | Create, Update, Delete, Upsert, Validate draft, Upload document, Link / Unlink, Start workflow |
+| `admin:read` | Admin list/read routes | Form / view / workflow **dropdowns** in the node, Get workflow run status |
+| `admin:write` | Admin write routes | Generate document from template |
 
-### 2. User behind the token (impersonation)
+Notes:
 
-The PAT runs **as the user who owns it**. Entity permissions, record policies (row visibility), field denials, form/view assignments, document capabilities, and manual-workflow ACL still apply.
+- On Cervio’s API guard, `*:write` implies the matching `*:read`.
+- Scopes do **not** grant row access, create rights on an entity, or form assignment by themselves.
 
-- Same user would not see a record in the UI → Get / List view returns not found / empty
-- No `can_create` on the entity → Create fails even with `records:write`
-- Form not assigned → write-schema / create via that form fails
-- Start workflow → same roles/groups as UI “Avvia workflow”, not “any admin token”
+### Layer 2 — User behind the PAT (impersonation)
+
+The PAT runs **as its owner**. Cervio re-checks everything that user would need in the UI:
+
+| ACL surface | Effect on the node |
+|-------------|--------------------|
+| Entity permissions (`can_read` / `can_create` / `can_update` / `can_delete`, …) | Without `can_create`, **Create fails even if the PAT has `records:write`** |
+| Record policies / row scope | Invisible rows → Get / List view look empty or “not found” (same as UI) |
+| Field denials | Fields missing or not writable in write-schema / PATCH |
+| Form & view assignments | Unassigned form → write-schema / create via that mask fails; unassigned view → List view fails |
+| Document capabilities (`doc_can_read` / `doc_can_create`, …) | List / upload / open documents |
+| Manual workflow trigger roles/groups | Start workflow uses the same ACL as UI **“Avvia workflow”**, not “any token with `records:write`” |
+| `system_admin` role | Required for admin dropdowns, List records (no view), generate-from-template, workflow run status, etc. |
+
+Mental model: **scopes open the door to the API; the user’s ACL decides what they can do once inside.**
 
 ### Practical setups
 
-| Use case | Suggested PAT owner + scopes |
-|----------|------------------------------|
-| Full guided UX in n8n (all pickers, generate doc, run status, list entity records) | User with **`system_admin`** + scopes `admin:read`, `admin:write`, `records:read`, `records:write` |
-| Integration that only reads/writes through assigned views/forms | Non-admin user with the right entity ACL + `records:read` / `records:write` only. Prefer **List view** (not List records). Fill entity/form/view UUIDs by hand or from a previous admin step — admin dropdowns need `admin:read` + system_admin |
+| Goal | PAT owner | Scopes to tick |
+|------|-----------|----------------|
+| Full guided UX in n8n (all pickers, generate doc, run status, List records) | User with **`system_admin`** | `admin:read`, `admin:write`, `records:read`, `records:write` |
+| Narrow integration (sync one entity through assigned views/forms) | Dedicated non-admin user with that entity ACL + form/view assignments | `records:read` and/or `records:write` only. Prefer **List view**. Enter entity/form/view ids manually if you omit `admin:read` |
 
-There is no separate “n8n plugin permission” in Cervio Admin: configure users, groups, entity ACL, and the PAT as for any other API client.
+Configure users, groups, entity ACL, and the PAT in Cervio Admin the same way as for any other API / MCP client — n8n does not add a third permission system.
 
 ## Installation
 
