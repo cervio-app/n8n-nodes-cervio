@@ -26,7 +26,7 @@ export async function cervioApiRequest(
 	const baseUrl = normalizeBaseUrl(String(credentials.baseUrl ?? ''));
 	if (!baseUrl) {
 		throw new NodeApiError(this.getNode(), {
-			message: 'Base URL della credenziale Cervio mancante',
+			message: 'Cervio credential Base URL is missing',
 		} as JsonObject);
 	}
 
@@ -238,7 +238,7 @@ export async function cervioApiRequestMultipart(
 	const baseUrl = normalizeBaseUrl(String(credentials.baseUrl ?? ''));
 	if (!baseUrl) {
 		throw new NodeApiError(this.getNode(), {
-			message: 'Base URL della credenziale Cervio mancante',
+			message: 'Cervio credential Base URL is missing',
 		} as JsonObject);
 	}
 

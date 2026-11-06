@@ -133,16 +133,16 @@ export function writeSchemaToMapperFields(
 		if (field.input.mode === 'relation') {
 			if (field.input.multi_select) {
 				descriptionParts.push(
-					'Multi-select: array di UUID (o stringa JSON / UUID separati da virgola). In Aggiorna usa «Modalità multi-valore» (add/replace/remove). Se la tendina manca, operazione «Cerca relazione».',
+					'Multi-select: UUID array (or JSON string / comma-separated UUIDs). On Update use “Multi-value mode” (add/replace/remove). If the dropdown is missing, use the “Search relation” operation.',
 				);
 			} else {
 				descriptionParts.push(
-					'UUID del record collegato. Tendina se i candidati sono pochi; altrimenti operazione «Cerca relazione» o UUID incollato.',
+					'UUID of the related record. Dropdown when few candidates; otherwise use “Search relation” or paste a UUID.',
 				);
 			}
 		}
 		if (field.input.mode === 'remote_options') {
-			descriptionParts.push('Valore da elenco remoto: usa lo slug o l’id salvato.');
+			descriptionParts.push('Remote option value: use the saved slug or id.');
 		}
 
 		return {

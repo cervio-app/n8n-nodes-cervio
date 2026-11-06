@@ -57,7 +57,7 @@ export class Cervio implements INodeType {
 		version: 1,
 		subtitle: '={{$parameter["operation"]}}',
 		description:
-			'Record, documenti, relazioni N:M, upsert/resolve e workflow su REST /api/v1. Maschere guidate per create/update; elenco admin per entity records.',
+			'Records, documents, N:M relations, upsert/resolve, and workflows over REST /api/v1. Guided forms for create/update; admin list for entity records.',
 		defaults: {
 			name: 'Cervio',
 		},
@@ -72,122 +72,122 @@ export class Cervio implements INodeType {
 		],
 		properties: [
 			{
-				displayName: 'Operazione',
+				displayName: 'Operation',
 				name: 'operation',
 				type: 'options',
 				noDataExpression: true,
 				options: [
 					{
-						name: 'Crea Record',
+						name: 'Create Record',
 						value: 'create',
-						description: 'Crea un record compilando i campi della maschera',
-						action: 'Crea un record',
+						description: 'Create a record using the form fields',
+						action: 'Create a record',
 					},
 					{
-						name: 'Aggiorna Record',
+						name: 'Update Record',
 						value: 'update',
 						description:
-							'Aggiorna un record per id, solo i campi compilati sulla maschera',
-						action: 'Aggiorna un record',
+							'Update a record by id; only mapped form fields are sent',
+						action: 'Update a record',
 					},
 					{
-						name: 'Leggi Vista',
+						name: 'List View',
 						value: 'listView',
 						description:
-							'Legge i record di una vista (filtri e colonne già sulla vista)',
-						action: 'Leggi una vista',
+							'Read records from a view (filters and columns come from the view)',
+						action: 'List a view',
 					},
 					{
-						name: 'Cerca Relazione',
+						name: 'Search Relation',
 						value: 'searchRelation',
 						description:
-							'Elenca/cerca candidati per un campo relazione (relation-options, fino a 100)',
-						action: 'Cerca candidati relazione',
+							'List/search candidates for a relation field (relation-options, up to 100)',
+						action: 'Search relation candidates',
 					},
 					{
-						name: 'Leggi Record',
+						name: 'Get Record',
 						value: 'get',
-						description: 'GET record per id (campi mascherati da ACL)',
-						action: 'Leggi un record',
+						description: 'GET a record by id (fields masked by ACL)',
+						action: 'Get a record',
 					},
 					{
-						name: 'Elimina Record',
+						name: 'Delete Record',
 						value: 'delete',
-						description: 'Soft delete del record',
-						action: 'Elimina un record',
+						description: 'Soft-delete the record',
+						action: 'Delete a record',
 					},
 					{
-						name: 'Elenca Record',
+						name: 'List Records',
 						value: 'listRecords',
 						description:
-							'Lista entity records (system_admin; filtri eq.field=value)',
-						action: 'Elenca record entità',
+							'List entity records (system_admin; filters eq.field=value)',
+						action: 'List entity records',
 					},
 					{
-						name: 'Valida Bozza',
+						name: 'Validate Draft',
 						value: 'validateDraft',
-						description: 'Dry-run formule/validazione maschera',
-						action: 'Valida bozza maschera',
+						description: 'Dry-run form formulas and validation',
+						action: 'Validate form draft',
 					},
 					{
 						name: 'Upsert Record',
 						value: 'upsert',
-						description: 'Upsert per chiave naturale (match_field)',
+						description: 'Upsert by natural key (match_field)',
 						action: 'Upsert record',
 					},
 					{
-						name: 'Elenca Documenti',
+						name: 'List Documents',
 						value: 'listDocuments',
-						description: 'Metadati documenti collegati al record',
-						action: 'Elenca documenti',
+						description: 'Metadata for documents linked to the record',
+						action: 'List documents',
 					},
 					{
-						name: 'Carica Documento',
+						name: 'Upload Document',
 						value: 'uploadDocument',
-						description: 'Upload multipart sul record',
-						action: 'Carica documento',
+						description: 'Multipart upload onto the record',
+						action: 'Upload document',
 					},
 					{
-						name: 'Apri Documento',
+						name: 'Open Document',
 						value: 'openDocument',
-						description: 'URL firmato per il file originale',
-						action: 'Apri documento',
+						description: 'Signed URL for the original file',
+						action: 'Open document',
 					},
 					{
-						name: 'Genera da Template',
+						name: 'Generate from Template',
 						value: 'generateDocument',
-						description: 'Render template → documento (admin)',
-						action: 'Genera documento da template',
+						description: 'Render a template into a document (admin)',
+						action: 'Generate document from template',
 					},
 					{
-						name: 'Collega Record',
+						name: 'Link Records',
 						value: 'linkRecords',
-						description: 'Link N:M (campo through sulla maschera)',
-						action: 'Collega record N:M',
+						description: 'N:M link (through field on the form)',
+						action: 'Link N:M records',
 					},
 					{
-						name: 'Scollega Record',
+						name: 'Unlink Records',
 						value: 'unlinkRecords',
 						description: 'Unlink N:M',
-						action: 'Scollega record N:M',
+						action: 'Unlink N:M records',
 					},
 					{
-						name: 'Risolvi Chiave',
+						name: 'Resolve Key',
 						value: 'resolveRelation',
-						description: 'Valori natural key → UUID record',
-						action: 'Risolvi chiavi naturali',
+						description: 'Natural-key values → record UUIDs',
+						action: 'Resolve natural keys',
 					},
 					{
-						name: 'Avvia Workflow',
+						name: 'Start Workflow',
 						value: 'startWorkflow',
-						description: 'Avvio manuale workflow su un record',
-						action: 'Avvia workflow',
+						description: 'Manually start a workflow on a record',
+						action: 'Start workflow',
 					},
 					{
-						name: 'Stato Run',
+						name: 'Get Run Status',
 						value: 'getWorkflowRun',
-						description: 'Stato run workflow (admin)',
-						action: 'Leggi stato run workflow',
+						description: 'Workflow run status (admin)',
+						action: 'Get workflow run status',
 					},
 				],
 				default: 'create',
@@ -195,7 +195,7 @@ export class Cervio implements INodeType {
 
 			// --- Shared: entity ---
 			{
-				displayName: 'Entità',
+				displayName: 'Entity',
 				name: 'entityId',
 				type: 'options',
 				typeOptions: {
@@ -208,12 +208,12 @@ export class Cervio implements INodeType {
 						operation: ['startWorkflow', 'getWorkflowRun'],
 					},
 				},
-				description: 'Solo le entità che questo token può leggere.',
+				description: 'Only entities this token can read.',
 			},
 
 			// --- Create / Update: form + fields ---
 			{
-				displayName: 'Maschera',
+				displayName: 'Form',
 				name: 'formName',
 				type: 'options',
 				typeOptions: {
@@ -236,10 +236,10 @@ export class Cervio implements INodeType {
 					},
 				},
 				description:
-					'I campi sotto sono quelli di questa maschera, non tutti i campi dell’entità. Cervio rifiuta i campi che non stanno su questa maschera. I collegamenti N:M (through) non compaiono: crea sulla junction.',
+					'Fields below are from this form, not every entity field. Cervio rejects fields that are not on this form. N:M through links are omitted — create on the junction.',
 			},
 			{
-				displayName: 'Campo Relazione',
+				displayName: 'Relation Field',
 				name: 'relationFieldName',
 				type: 'options',
 				typeOptions: {
@@ -254,10 +254,10 @@ export class Cervio implements INodeType {
 					},
 				},
 				description:
-					'Campo relazione sulla maschera (anche multi-select). Non include i through N:M.',
+					'Relation field on the form (including multi-select). Does not include N:M through fields.',
 			},
 			{
-				displayName: 'Ricerca',
+				displayName: 'Search',
 				name: 'relationQuery',
 				type: 'string',
 				default: '',
@@ -267,10 +267,10 @@ export class Cervio implements INodeType {
 					},
 				},
 				description:
-					'Testo libero passato a relation-options?q=. Vuoto = primi risultati.',
+					'Free text passed to relation-options?q=. Empty = first results.',
 			},
 			{
-				displayName: 'Limite',
+				displayName: 'Limit',
 				name: 'relationLimit',
 				type: 'number',
 				typeOptions: {
@@ -283,10 +283,10 @@ export class Cervio implements INodeType {
 						operation: ['searchRelation'],
 					},
 				},
-				description: 'Da 1 a 100 (tetto API Cervio).',
+				description: 'From 1 to 100 (Cervio API cap).',
 			},
 			{
-				displayName: 'Id Record',
+				displayName: 'Record ID',
 				name: 'recordId',
 				type: 'string',
 				required: true,
@@ -307,10 +307,10 @@ export class Cervio implements INodeType {
 					},
 				},
 				description:
-					'L’id letto da Leggi vista, per esempio {{ $json.id }}. Non è un campo della maschera.',
+					'Record id from List view, e.g. {{ $json.id }}. Not a form field.',
 			},
 			{
-				displayName: 'Campo Through (N:M)',
+				displayName: 'Through Field (N:M)',
 				name: 'throughFieldName',
 				type: 'options',
 				typeOptions: {
@@ -324,10 +324,10 @@ export class Cervio implements INodeType {
 						operation: ['linkRecords', 'unlinkRecords'],
 					},
 				},
-				description: 'Campo collegamento N:M (storage through) sulla maschera.',
+				description: 'N:M link field (through storage) on the form.',
 			},
 			{
-				displayName: 'Id Record Lontano',
+				displayName: 'Far Record ID',
 				name: 'farRecordId',
 				type: 'string',
 				required: true,
@@ -337,10 +337,10 @@ export class Cervio implements INodeType {
 						operation: ['linkRecords', 'unlinkRecords'],
 					},
 				},
-				description: 'UUID dell’altro capo del link N:M.',
+				description: 'UUID of the other end of the N:M link.',
 			},
 			{
-				displayName: 'Campo Match',
+				displayName: 'Match Field',
 				name: 'matchField',
 				type: 'options',
 				typeOptions: {
@@ -354,10 +354,10 @@ export class Cervio implements INodeType {
 						operation: ['upsert', 'resolveRelation'],
 					},
 				},
-				description: 'Campo scalare univoco per upsert o resolve.',
+				description: 'Unique scalar field for upsert or resolve.',
 			},
 			{
-				displayName: 'Valori da Risolvere',
+				displayName: 'Values to Resolve',
 				name: 'resolveValues',
 				type: 'string',
 				required: true,
@@ -368,13 +368,13 @@ export class Cervio implements INodeType {
 					},
 				},
 				description:
-					'Array JSON ["a","b"] oppure valori separati da virgola. Opzionale field_name sotto Opzioni.',
+					'JSON array ["a","b"] or comma-separated values. Optional field_name under Options.',
 			},
 			{
-				displayName: 'Opzioni Resolve',
+				displayName: 'Resolve Options',
 				name: 'resolveOptions',
 				type: 'collection',
-				placeholder: 'Aggiungi opzione',
+				placeholder: 'Add option',
 				default: {},
 				displayOptions: {
 					show: {
@@ -383,17 +383,17 @@ export class Cervio implements INodeType {
 				},
 				options: [
 					{
-						displayName: 'Nome Campo Relazione',
+						displayName: 'Relation Field Name',
 						name: 'fieldName',
 						type: 'string',
 						default: '',
 						description:
-							'Se impostato, resolve sul target del campo relation invece che sull’entità corrente.',
+							'If set, resolve against the relation field target instead of the current entity.',
 					},
 				],
 			},
 			{
-				displayName: 'Filtri',
+				displayName: 'Filters',
 				name: 'listRecordsFilters',
 				type: 'fixedCollection',
 				typeOptions: { multipleValues: true },
@@ -403,21 +403,21 @@ export class Cervio implements INodeType {
 						operation: ['listRecords'],
 					},
 				},
-				placeholder: 'Aggiungi filtro',
-				description: 'Ogni filtro → filter[campo]=eq.valore (AND).',
+				placeholder: 'Add filter',
+				description: 'Each filter → filter[field]=eq.value (AND).',
 				options: [
 					{
-						displayName: 'Filtro',
+						displayName: 'Filter',
 						name: 'filter',
 						values: [
 							{
-								displayName: 'Campo',
+								displayName: 'Field',
 								name: 'field',
 								type: 'string',
 								default: '',
 							},
 							{
-								displayName: 'Valore',
+								displayName: 'Value',
 								name: 'value',
 								type: 'string',
 								default: '',
@@ -427,7 +427,7 @@ export class Cervio implements INodeType {
 				],
 			},
 			{
-				displayName: 'Limite',
+				displayName: 'Limit',
 				name: 'listRecordsLimit',
 				type: 'number',
 				typeOptions: { minValue: 1, maxValue: 500 },
@@ -451,7 +451,7 @@ export class Cervio implements INodeType {
 				},
 			},
 			{
-				displayName: 'Id Documento',
+				displayName: 'Document ID',
 				name: 'documentId',
 				type: 'string',
 				required: true,
@@ -463,7 +463,7 @@ export class Cervio implements INodeType {
 				},
 			},
 			{
-				displayName: 'Id Template',
+				displayName: 'Template ID',
 				name: 'templateId',
 				type: 'string',
 				required: true,
@@ -473,10 +473,10 @@ export class Cervio implements INodeType {
 						operation: ['generateDocument'],
 					},
 				},
-				description: 'UUID template documento (nessun elenco REST pubblico).',
+				description: 'Document template UUID (no public REST catalog yet).',
 			},
 			{
-				displayName: 'Proprietà Binaria',
+				displayName: 'Binary Property',
 				name: 'binaryPropertyName',
 				type: 'string',
 				default: 'data',
@@ -485,13 +485,13 @@ export class Cervio implements INodeType {
 						operation: ['uploadDocument'],
 					},
 				},
-				description: 'Campo binary dell’item n8n da inviare come file.',
+				description: 'Binary field on the n8n item to upload as the file.',
 			},
 			{
-				displayName: 'Opzioni Upload',
+				displayName: 'Upload Options',
 				name: 'uploadOptions',
 				type: 'collection',
-				placeholder: 'Aggiungi opzione',
+				placeholder: 'Add option',
 				default: {},
 				displayOptions: {
 					show: {
@@ -500,25 +500,25 @@ export class Cervio implements INodeType {
 				},
 				options: [
 					{
-						displayName: 'Titolo',
+						displayName: 'Title',
 						name: 'title',
 						type: 'string',
 						default: '',
 					},
 					{
-						displayName: 'Nome File',
+						displayName: 'File Name',
 						name: 'fileName',
 						type: 'string',
 						default: '',
-						description: 'Default: nome dal binary o upload.bin',
+						description: 'Default: name from the binary or upload.bin',
 					},
 				],
 			},
 			{
-				displayName: 'Opzioni Valida Bozza',
+				displayName: 'Validate Draft Options',
 				name: 'validateDraftOptions',
 				type: 'collection',
-				placeholder: 'Aggiungi opzione',
+				placeholder: 'Add option',
 				default: {},
 				displayOptions: {
 					show: {
@@ -527,11 +527,11 @@ export class Cervio implements INodeType {
 				},
 				options: [
 					{
-						displayName: 'Id Record Esistente',
+						displayName: 'Existing Record ID',
 						name: 'recordId',
 						type: 'string',
 						default: '',
-						description: 'Opzionale: merge con dati già salvati.',
+						description: 'Optional: merge with already saved data.',
 					},
 				],
 			},
@@ -551,7 +551,7 @@ export class Cervio implements INodeType {
 				},
 			},
 			{
-				displayName: 'Id Record (entity_data_id)',
+				displayName: 'Record ID (entity_data_id)',
 				name: 'entityDataId',
 				type: 'string',
 				required: true,
@@ -561,10 +561,10 @@ export class Cervio implements INodeType {
 						operation: ['startWorkflow'],
 					},
 				},
-				description: 'UUID del record su cui avviare il workflow.',
+				description: 'UUID of the record to start the workflow on.',
 			},
 			{
-				displayName: 'Dati Aggiuntivi',
+				displayName: 'Additional Data',
 				name: 'workflowData',
 				type: 'json',
 				default: '{}',
@@ -573,10 +573,10 @@ export class Cervio implements INodeType {
 						operation: ['startWorkflow'],
 					},
 				},
-				description: 'Payload opzionale passato al trigger manuale.',
+				description: 'Optional payload passed to the manual trigger.',
 			},
 			{
-				displayName: 'Id Run',
+				displayName: 'Run ID',
 				name: 'runId',
 				type: 'string',
 				required: true,
@@ -586,10 +586,10 @@ export class Cervio implements INodeType {
 						operation: ['getWorkflowRun'],
 					},
 				},
-				description: 'invocation_id restituito da Avvia workflow.',
+				description: 'invocation_id returned by Start Workflow.',
 			},
 			{
-				displayName: 'Campi',
+				displayName: 'Fields',
 				name: 'fields',
 				type: 'resourceMapper',
 				default: {
@@ -609,18 +609,18 @@ export class Cervio implements INodeType {
 						resourceMapperMethod: 'getFormFieldsCreate',
 						mode: 'add',
 						fieldWords: {
-							singular: 'campo',
-							plural: 'campi',
+							singular: 'field',
+							plural: 'fields',
 						},
 						addAllFields: true,
 						multiKeyMatch: false,
 					},
 				},
 				description:
-					'I campi calcolati da Cervio non compaiono: li compila il server. Usa «Aggiungi tutti i campi» per partire dalla maschera intera.',
+					'Computed Cervio fields are omitted — the server fills them. Use “Add all fields” to start from the full form.',
 			},
 			{
-				displayName: 'Campi',
+				displayName: 'Fields',
 				name: 'fields',
 				type: 'resourceMapper',
 				default: {
@@ -640,18 +640,18 @@ export class Cervio implements INodeType {
 						resourceMapperMethod: 'getFormFieldsUpdate',
 						mode: 'update',
 						fieldWords: {
-							singular: 'campo',
-							plural: 'campi',
+							singular: 'field',
+							plural: 'fields',
 						},
 						addAllFields: true,
 						multiKeyMatch: false,
 					},
 				},
 				description:
-					'Lascia vuoto un campo per non toccarlo. Almeno un campo va compilato. La PATCH fa merge: gli altri valori restano.',
+					'Leave a field empty to leave it unchanged. At least one field must be set. PATCH merges; other values stay.',
 			},
 			{
-				displayName: 'Campi',
+				displayName: 'Fields',
 				name: 'fields',
 				type: 'resourceMapper',
 				default: {
@@ -671,20 +671,20 @@ export class Cervio implements INodeType {
 						resourceMapperMethod: 'getFormFieldsCreate',
 						mode: 'add',
 						fieldWords: {
-							singular: 'campo',
-							plural: 'campi',
+							singular: 'field',
+							plural: 'fields',
 						},
 						addAllFields: true,
 						multiKeyMatch: false,
 					},
 				},
-				description: 'Stessa maschera di Crea record.',
+				description: 'Same form as Create Record.',
 			},
 			{
-				displayName: 'Opzioni Avanzate',
+				displayName: 'Additional Fields',
 				name: 'updateOptions',
 				type: 'collection',
-				placeholder: 'Aggiungi opzione',
+				placeholder: 'Add option',
 				default: {},
 				displayOptions: {
 					show: {
@@ -693,38 +693,38 @@ export class Cervio implements INodeType {
 				},
 				options: [
 					{
-						displayName: 'Data di Aggiornamento Attesa',
+						displayName: 'Expected Updated At',
 						name: 'expectedUpdatedAt',
 						type: 'string',
 						default: '',
 						description:
-							'Se qualcuno ha modificato il record nel frattempo, Cervio risponde 409. Di solito la lasci vuota.',
+							'If someone else changed the record, Cervio returns 409. Usually leave empty.',
 					},
 					{
-						displayName: 'Modalità Multi-Valore',
+						displayName: 'Multi-Value Mode',
 						name: 'multiValueModes',
 						type: 'fixedCollection',
 						typeOptions: {
 							multipleValues: true,
 						},
 						default: {},
-						placeholder: 'Aggiungi campo',
+						placeholder: 'Add field',
 						description:
-							'Per campi relation multi_select: add | replace (default API) | remove. Il campo deve essere presente in Campi.',
+							'For multi_select relation fields: add | replace (API default) | remove. The field must be present in Fields.',
 						options: [
 							{
-								displayName: 'Campo',
+								displayName: 'Field',
 								name: 'entry',
 								values: [
 									{
-										displayName: 'Nome Campo',
+										displayName: 'Field Name',
 										name: 'field',
 										type: 'string',
 										default: '',
-										description: 'field_name sulla maschera (es. document_controllers)',
+										description: 'field_name on the form (e.g. document_controllers)',
 									},
 									{
-										displayName: 'Modalità',
+										displayName: 'Mode',
 										name: 'mode',
 										type: 'options',
 										options: [
@@ -743,7 +743,7 @@ export class Cervio implements INodeType {
 
 			// --- List view ---
 			{
-				displayName: 'Vista',
+				displayName: 'View',
 				name: 'viewId',
 				type: 'options',
 				typeOptions: {
@@ -758,23 +758,23 @@ export class Cervio implements INodeType {
 					},
 				},
 				description:
-					'Questa vista porta già i suoi filtri e le sue colonne. Per un altro insieme di righe scegli un’altra vista.',
+					'This view already carries its filters and columns. Pick another view for a different row set.',
 			},
 			{
-				displayName: 'Quante Righe',
+				displayName: 'How Many Rows',
 				name: 'pageMode',
 				type: 'options',
 				options: [
 					{
-						name: 'Prima Pagina',
+						name: 'First Page',
 						value: 'first',
-						description: 'Una sola pagina, fino al limite scelto',
+						description: 'A single page, up to the chosen limit',
 					},
 					{
-						name: 'Tutte le Pagine',
+						name: 'All Pages',
 						value: 'all',
 						description:
-							'Il nodo segue next_cursor da solo (massimo 10 pagine)',
+							'The node follows next_cursor automatically (max 10 pages)',
 					},
 				],
 				default: 'first',
@@ -784,10 +784,10 @@ export class Cervio implements INodeType {
 					},
 				},
 				description:
-					'Prima pagina: da 1 a 500. La risposta non include il totale. Tutte le pagine: oltre 5000 righe si ferma e segnala che la vista è più lunga.',
+					'First page: 1–500. The response does not include the total. All pages: stops after 5000 rows and flags that the view is longer.',
 			},
 			{
-				displayName: 'Limite per Pagina',
+				displayName: 'Limit Per Page',
 				name: 'limit',
 				type: 'number',
 				typeOptions: {
@@ -800,16 +800,16 @@ export class Cervio implements INodeType {
 						operation: ['listView'],
 					},
 				},
-				description: 'Da 1 a 500. La risposta non include il totale.',
+				description: 'From 1 to 500. The response does not include the total.',
 			},
 			{
-				displayName: 'Elenchi (Opzioni Fisse)',
+				displayName: 'Option Lists',
 				name: 'optionsMode',
 				type: 'options',
 				options: [
-					{ name: 'Solo Valore Salvato (consigliato per Update)', value: 'slugs' },
-					{ name: 'Etichetta e Id', value: 'both' },
-					{ name: 'Solo Etichetta', value: 'labels' },
+					{ name: 'Stored Value Only (recommended for Update)', value: 'slugs' },
+					{ name: 'Label and ID', value: 'both' },
+					{ name: 'Label Only', value: 'labels' },
 				],
 				default: 'slugs',
 				displayOptions: {
@@ -818,16 +818,16 @@ export class Cervio implements INodeType {
 					},
 				},
 				description:
-					'Default slugs: pronto per Aggiorna. «Etichetta e id» dà oggetti {id,label}: il nodo in Update estrae .id se serve.',
+					'Default slugs: ready for Update. “Label and ID” yields {id,label} objects; Update extracts .id when needed.',
 			},
 			{
-				displayName: 'Collegamenti (Relazioni)',
+				displayName: 'Relations',
 				name: 'relationsMode',
 				type: 'options',
 				options: [
-					{ name: 'Solo UUID (consigliato per Update)', value: 'uuids' },
-					{ name: 'Etichetta e Id', value: 'both' },
-					{ name: 'Solo Etichetta', value: 'labels' },
+					{ name: 'UUID Only (recommended for Update)', value: 'uuids' },
+					{ name: 'Label and ID', value: 'both' },
+					{ name: 'Label Only', value: 'labels' },
 				],
 				default: 'uuids',
 				displayOptions: {
@@ -836,15 +836,15 @@ export class Cervio implements INodeType {
 					},
 				},
 				description:
-					'Default uuids: pronto per Aggiorna. Le colonne lookup della vista restano etichette (non UUID): usa Cerca relazione o GET fuori nodo.',
+					'Default uuids: ready for Update. View lookup columns stay labels (not UUIDs): use Search Relation or GET outside the node.',
 			},
 			{
-				displayName: 'Lingua Etichette',
+				displayName: 'Label Locale',
 				name: 'locale',
 				type: 'options',
 				options: [
-					{ name: 'Lingua del Profilo', value: '' },
-					{ name: 'Italiano', value: 'it' },
+					{ name: 'Profile Locale', value: '' },
+					{ name: 'Italian', value: 'it' },
 					{ name: 'English', value: 'en' },
 					{ name: 'Deutsch', value: 'de' },
 					{ name: 'Français', value: 'fr' },
@@ -857,10 +857,10 @@ export class Cervio implements INodeType {
 					},
 				},
 				description:
-					'Vale per le etichette degli elenchi, non per i nomi dei campi.',
+					'Applies to option-list labels, not field names.',
 			},
 			{
-				displayName: 'Includi il Totale',
+				displayName: 'Include Total Count',
 				name: 'includeCount',
 				type: 'boolean',
 				default: false,
@@ -870,13 +870,13 @@ export class Cervio implements INodeType {
 					},
 				},
 				description:
-					'Una richiesta in più. Accendila solo se ti serve il numero.',
+					'One extra request. Enable only if you need the number.',
 			},
 			{
-				displayName: 'Opzioni Avanzate',
+				displayName: 'Additional Fields',
 				name: 'listOptions',
 				type: 'collection',
-				placeholder: 'Aggiungi opzione',
+				placeholder: 'Add option',
 				default: {},
 				displayOptions: {
 					show: {
@@ -885,12 +885,12 @@ export class Cervio implements INodeType {
 				},
 				options: [
 					{
-						displayName: 'Continua da Questa Pagina',
+						displayName: 'Continue From Cursor',
 						name: 'cursor',
 						type: 'string',
 						default: '',
 						description:
-							'Incolla next_cursor di un’esecuzione precedente. Vuoto = dalla prima riga.',
+							'Paste next_cursor from a previous run. Empty = start from the first row.',
 					},
 				],
 			},
@@ -908,7 +908,7 @@ export class Cervio implements INodeType {
 						name: e.label || e.name || e.id,
 						value: e.id,
 					}))
-					.sort((a, b) => a.name.localeCompare(b.name, 'it'));
+					.sort((a, b) => a.name.localeCompare(b.name, 'en'));
 			},
 
 			async getForms(
@@ -1030,7 +1030,7 @@ export class Cervio implements INodeType {
 						value: field.name,
 					});
 				}
-				out.sort((a, b) => a.name.localeCompare(b.name, 'it'));
+				out.sort((a, b) => a.name.localeCompare(b.name, 'en'));
 				return out;
 			},
 
@@ -1043,7 +1043,7 @@ export class Cervio implements INodeType {
 						name: w.name || w.id,
 						value: w.id,
 					}))
-					.sort((a, b) => a.name.localeCompare(b.name, 'it'));
+					.sort((a, b) => a.name.localeCompare(b.name, 'en'));
 			},
 		},
 
@@ -1085,7 +1085,7 @@ export class Cervio implements INodeType {
 			if (!fieldName?.trim()) {
 				throw new NodeOperationError(
 					this.getNode(),
-					'Campo relazione obbligatorio.',
+					'Relation field is required.',
 				);
 			}
 			const records = await searchRelationOptions.call(
@@ -1247,7 +1247,7 @@ export class Cervio implements INodeType {
 						if (!runId) {
 							throw new NodeOperationError(
 								this.getNode(),
-								'Id run obbligatorio.',
+								'Run ID is required.',
 								{ itemIndex: i },
 							);
 						}
@@ -1268,7 +1268,7 @@ export class Cervio implements INodeType {
 					if (!entityDataId) {
 						throw new NodeOperationError(
 							this.getNode(),
-							'Id record (entity_data_id) obbligatorio.',
+							'Record ID (entity_data_id) is required.',
 							{ itemIndex: i },
 						);
 					}
@@ -1344,7 +1344,7 @@ export class Cervio implements INodeType {
 					if (!documentId) {
 						throw new NodeOperationError(
 							this.getNode(),
-							'Id documento obbligatorio.',
+							'Document ID is required.',
 							{ itemIndex: i },
 						);
 					}
@@ -1369,7 +1369,7 @@ export class Cervio implements INodeType {
 					if (!templateId) {
 						throw new NodeOperationError(
 							this.getNode(),
-							'Id template obbligatorio.',
+							'Template ID is required.',
 							{ itemIndex: i },
 						);
 					}
@@ -1451,7 +1451,7 @@ export class Cervio implements INodeType {
 					if (!farRecordId || !throughField) {
 						throw new NodeOperationError(
 							this.getNode(),
-							'Campo through e id record lontano obbligatori.',
+							'Through field and far record ID are required.',
 							{ itemIndex: i },
 						);
 					}
@@ -1524,7 +1524,7 @@ export class Cervio implements INodeType {
 				if (!fieldMapperOps.has(operation)) {
 					throw new NodeOperationError(
 						this.getNode(),
-						`Operazione non supportata: ${operation}`,
+						`Unsupported operation: ${operation}`,
 						{ itemIndex: i },
 					);
 				}
@@ -1576,7 +1576,7 @@ export class Cervio implements INodeType {
 					if (!matchField?.trim()) {
 						throw new NodeOperationError(
 							this.getNode(),
-							'Campo match obbligatorio.',
+							'Match field is required.',
 							{ itemIndex: i },
 						);
 					}
@@ -1653,7 +1653,7 @@ export class Cervio implements INodeType {
 function requireRecordId(ctx: IExecuteFunctions, itemIndex: number): string {
 	const recordId = (ctx.getNodeParameter('recordId', itemIndex) as string)?.trim();
 	if (!recordId) {
-		throw new NodeOperationError(ctx.getNode(), 'Id record obbligatorio.', {
+		throw new NodeOperationError(ctx.getNode(), 'Record ID is required.', {
 			itemIndex,
 		});
 	}
@@ -1688,7 +1688,7 @@ function parseResolveValues(
 	if (!trimmed) {
 		throw new NodeOperationError(
 			ctx.getNode(),
-			'Valori da risolvere obbligatori.',
+			'Values to resolve are required.',
 			{ itemIndex },
 		);
 	}
@@ -1699,14 +1699,14 @@ function parseResolveValues(
 		} catch {
 			throw new NodeOperationError(
 				ctx.getNode(),
-				'JSON valori non valido.',
+				'Invalid values JSON.',
 				{ itemIndex },
 			);
 		}
 		if (!Array.isArray(parsed)) {
 			throw new NodeOperationError(
 				ctx.getNode(),
-				'JSON valori deve essere un array.',
+				'Values JSON must be an array.',
 				{ itemIndex },
 			);
 		}
@@ -1737,7 +1737,7 @@ async function buildMapperFields(
 	const fields = writeSchemaToMapperFields(schema, mode);
 
 	// Single relations: dropdown when candidates fit under RELATION_DROPDOWN_LIMIT.
-	// Multi_select stays array (UUID[]); browse all via operation «Cerca relazione».
+	// Multi_select stays array (UUID[]); browse all via “Search Relation”.
 	for (const field of fields) {
 		const schemaField = schema.fields.find((f) => f.name === field.id);
 		if (!schemaField || schemaField.input.mode !== 'relation') continue;
@@ -1758,14 +1758,14 @@ async function buildMapperFields(
 						.join('; ');
 					field.description = [
 						field.description,
-						`Anteprima candidati: ${preview}${records.length > 8 ? '…' : ''}. Usa «Cerca relazione» per filtrare.`,
+						`Candidate preview: ${preview}${records.length > 8 ? '…' : ''}. Use “Search Relation” to filter.`,
 					]
 						.filter(Boolean)
 						.join(' ');
 				} else if (records.length >= RELATION_DROPDOWN_LIMIT) {
 					field.description = [
 						field.description,
-						`≥${RELATION_DROPDOWN_LIMIT} candidati: operazione «Cerca relazione» (q + limit fino a ${RELATION_SEARCH_MAX_LIMIT}), poi UUID[] nei campi.`,
+						`≥${RELATION_DROPDOWN_LIMIT} candidates: use “Search Relation” (q + limit up to ${RELATION_SEARCH_MAX_LIMIT}), then UUID[] in Fields.`,
 					]
 						.filter(Boolean)
 						.join(' ');
@@ -1782,7 +1782,7 @@ async function buildMapperFields(
 			} else if (records.length >= RELATION_DROPDOWN_LIMIT) {
 				field.description = [
 					field.description,
-					`Troppi record per la tendina (cap ${RELATION_DROPDOWN_LIMIT}): usa «Cerca relazione» o incolla l’UUID.`,
+					`Too many records for the dropdown (cap ${RELATION_DROPDOWN_LIMIT}): use “Search Relation” or paste the UUID.`,
 				]
 					.filter(Boolean)
 					.join(' ');

@@ -27,7 +27,7 @@ export class CervioApi implements ICredentialType {
 			placeholder: 'https://tenant.cervio.app',
 			required: true,
 			description:
-				'URL dell’istanza Cervio del tenant, senza slash finale (es. https://acme.cervio.app). Va impostata per ogni credenziale.',
+				'Cervio tenant URL without a trailing slash (e.g. https://acme.cervio.app). Required for every credential.',
 		},
 		{
 			displayName: 'Personal Access Token',
@@ -38,7 +38,7 @@ export class CervioApi implements ICredentialType {
 			required: true,
 			placeholder: 'cpat_…',
 			description:
-				'Token creato in Admin → API. Consigliato: admin:read + admin:write + records:read + records:write (system_admin) per tendine, workflow, generate documento e scritture.',
+				'Token from Admin → API. Recommended: admin:read + admin:write + records:read + records:write (system_admin) for dropdowns, workflows, document generate, and writes.',
 		},
 	];
 
