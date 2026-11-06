@@ -169,21 +169,21 @@ async function main() {
 		findings.opts.push({
 			prio: 'P1',
 			id: 'dedup-sede_id',
-			title: 'write-schema ripete sede_id (far-edit demo) → colonne mapper duplicate',
-			detail: `Lab Rel Corso default ha sede_id ×${sedeDup}. writeSchemaToMapperFields non deduplica per name.`,
+			title: 'write-schema repeats sede_id (far-edit demo) → duplicate mapper columns',
+			detail: `Lab Rel Corso default has sede_id ×${sedeDup}. writeSchemaToMapperFields does not dedupe by name.`,
 		});
 	}
 	for (const f of throughFields) {
 		findings.ok.push(
-			`write-schema marca ${f.name} as through (nodo lo omette correttamente se storage=through)`,
+			`write-schema marks ${f.name} as through (node correctly omits it when storage=through)`,
 		);
 	}
 	findings.missing.push({
 		prio: 'P0',
 		id: 'nm-link',
-		title: 'N:M through non scrivibile dal nodo (né REST link_records pubblico)',
+		title: 'N:M through not writable from the node (nor public REST link_records)',
 		detail:
-			'Campi argomenti_tag / argomenti_livello: write_note link_records MCP. Nodo omette through; nessun op link/unlink.',
+			'Fields argomenti_tag / argomenti_livello: write_note link_records MCP. Node omits through; no link/unlink op.',
 	});
 
 	// --- fixtures sede / docente ---
@@ -207,7 +207,7 @@ async function main() {
 	log('relation-options', `sede_id → ${sedeOpts.length} (limit ${DROPDOWN_PROBE_LIMIT})`);
 	if (sedeOpts.length > 0 && sedeOpts.length < 50) {
 		findings.ok.push(
-			`N:1 sede_id: relation-options <50 → nodo promuove a tendina (${sedeOpts.length} candidati prima dello seed)`,
+			`N:1 sede_id: relation-options <50 → node promotes to dropdown (${sedeOpts.length} candidates before seed)`,
 		);
 	}
 
@@ -224,7 +224,7 @@ async function main() {
 	});
 	assert(corso.id, 'corso create no id');
 	log('create-corso', corso.id);
-	findings.ok.push('Create Corso con sede_id (N:1) + tutor_id (1:1) OK');
+	findings.ok.push('Create Corso with sede_id (N:1) + tutor_id (1:1) OK');
 
 	// --- create lezione 1:N child ---
 	const lezione = await api(
@@ -243,14 +243,14 @@ async function main() {
 	assert(lezione.id, 'lezione create no id');
 	log('create-lezione', lezione.id);
 	findings.ok.push(
-		'1:N: create sul figlio Lab Rel Lezione con corso_id OK (finestra lezioni sul padre non è array scrivibile)',
+		'1:N: create on child Lab Rel Lezione with corso_id OK (parent lessons window is not a writable array)',
 	);
 	findings.missing.push({
 		prio: 'P1',
 		id: 'nested-child',
-		title: 'Nessun create figlio annidato dal padre',
+		title: 'No nested child create from the parent',
 		detail:
-			'Per 1:N serve un secondo nodo Create sull’entity figlia con FK. Nessuna op “add child under parent”.',
+			'For 1:N you need a second Create node on the child entity with the FK. No “add child under parent” op.',
 	});
 
 	// --- partial update ---
@@ -272,7 +272,7 @@ async function main() {
 				? data.tutor_id
 				: data.tutor_id?.id;
 		assert(got === tid, `tutor not updated: ${JSON.stringify(data.tutor_id)}`);
-		findings.ok.push('PATCH parziale tutor_id (merge) OK');
+		findings.ok.push('Partial PATCH tutor_id (merge) OK');
 	}
 
 	// --- N:M negative ---
@@ -301,16 +301,16 @@ async function main() {
 		log('nm-verify', `argomenti_tag after PATCH=${JSON.stringify(tagVal)}`);
 		if (tagVal == null || (Array.isArray(tagVal) && tagVal.length === 0)) {
 			findings.notes.push(
-				'PATCH argomenti_tag[uuid] → 200 ma valore non persistito (ignored). Nodo comunque non espone through.',
+				'PATCH argomenti_tag[uuid] → 200 but value not persisted (ignored). Node still does not expose through.',
 			);
 		} else {
 			findings.notes.push(
-				`PATCH argomenti_tag ha persistito ${JSON.stringify(tagVal)} — inatteso vs write_note through.`,
+				`PATCH argomenti_tag persisted ${JSON.stringify(tagVal)} — unexpected vs write_note through.`,
 			);
 		}
 	} else {
 		findings.ok.push(
-			`N:M write argomenti_tag rifiutata/errore ${nmTry.status} (allineato a write_note through)`,
+			`N:M write argomenti_tag rejected/error ${nmTry.status} (aligned with write_note through)`,
 		);
 	}
 
@@ -326,9 +326,9 @@ async function main() {
 	findings.limits.push({
 		prio: 'P1',
 		id: 'view-columns-only',
-		title: 'List view espone solo colonne della vista, non tutti i campi della maschera',
+		title: 'List view exposes only view columns, not every form field',
 		detail:
-			`Lab Rel Corso default mostra solo through (${corsoKeys.join(', ') || 'vuoto'}): sede_id/tutor_id assenti. Per Update guidato serve vista con parent_fk o GET record (non nel nodo).`,
+			`Lab Rel Corso default shows only through (${corsoKeys.join(', ') || 'empty'}): sede_id/tutor_id absent. Guided Update needs a view with parent_fk or GET record (not in the node).`,
 	});
 
 	// TESTMCP: options=both → {id,label} round-trip trap (entity already used by smoke.mjs)
@@ -357,8 +357,8 @@ async function main() {
 		findings.opts.push({
 			prio: 'P0',
 			id: 'list-both-roundtrip',
-			title: 'Default options/relations=both → oggetti non round-trip per Update',
-			detail: `TESTMCP stato both=${JSON.stringify(statoBoth)}; PATCH oggetto → ${badStato.ok ? 'accepted' : badStato.status}. Quick win: default listView options=slugs + relations=uuids, o coercizione .id in update.`,
+			title: 'Default options/relations=both → objects do not round-trip for Update',
+			detail: `TESTMCP stato both=${JSON.stringify(statoBoth)}; PATCH object → ${badStato.ok ? 'accepted' : badStato.status}. Quick win: default listView options=slugs + relations=uuids, or coerce .id on update.`,
 		});
 		const goodStato = await api(
 			'PATCH',
@@ -367,7 +367,7 @@ async function main() {
 			{ allowFail: true },
 		);
 		if (goodStato.ok) {
-			findings.ok.push('PATCH stato con slug estratto da both.id OK');
+			findings.ok.push('PATCH stato with slug extracted from both.id OK');
 		}
 	}
 
@@ -400,7 +400,7 @@ async function main() {
 	assert(riga.id, 'riga create failed');
 	log('man-rel', `ordine=${ordine.id} riga=${riga.id}`);
 	findings.ok.push(
-		'Man Rel Ordine: Collegamento cliente_id + figlio riga con ordine_id OK',
+		'Man Rel Ordine: link cliente_id + child riga with ordine_id OK',
 	);
 
 	// --- Engineering Projects multi_select ---
@@ -429,7 +429,7 @@ async function main() {
 	assert(eng.id, 'eng project create failed');
 	log('eng-create', `${eng.id} controllers=${cIds.join(',')}`);
 	findings.ok.push(
-		'Create Engineering Project con document_controllers UUID[] (replace default) OK via REST',
+		'Create Engineering Project with document_controllers UUID[] (replace default) OK via REST',
 	);
 
 	// Eng Projects view: lookup columns — labels not UUIDs even with relations=uuids
@@ -452,9 +452,9 @@ async function main() {
 		findings.opts.push({
 			prio: 'P0',
 			id: 'list-lookup-not-writable',
-			title: 'Viste con lookup: relations=uuids non restituisce UUID scrivibili',
+			title: 'Views with lookups: relations=uuids does not return writable UUIDs',
 			detail:
-				'Eng Projects default usa lookup document_controllers_display_name (nomi). List→Update multi_select impossibile senza GET record o colonna parent_fk grezza.',
+				'Eng Projects default uses lookup document_controllers_display_name (names). List→Update multi_select impossible without GET record or a raw parent_fk column.',
 		});
 	}
 	if (
@@ -462,7 +462,7 @@ async function main() {
 		typeof engRowU.data.project_status === 'string'
 	) {
 		findings.ok.push(
-			'options=slugs su fixed_list → stringa adatta al PATCH (project_status)',
+			'options=slugs on fixed_list → string suitable for PATCH (project_status)',
 		);
 	}
 
@@ -488,14 +488,14 @@ async function main() {
 		findings.missing.push({
 			prio: 'P0',
 			id: 'multi_value_modes',
-			title: 'Nodo non espone multi_value_modes (add/replace/remove)',
+			title: 'Node does not expose multi_value_modes (add/replace/remove)',
 			detail:
-				'REST supporta multi_value_modes su parent_fk multi_select. Mapper espone array ma senza modes → solo replace implicito.',
+				'REST supports multi_value_modes on parent_fk multi_select. Mapper exposes an array but no modes → implicit replace only.',
 		});
-		findings.ok.push('REST multi_value_modes=add funziona (gap solo lato nodo)');
+		findings.ok.push('REST multi_value_modes=add works (gap only on the node side)');
 	} else {
 		findings.notes.push(
-			`multi_value_modes add non ok: ${addMode.status} — verificare contratto`,
+			`multi_value_modes add not ok: ${addMode.status} — check contract`,
 		);
 	}
 
@@ -510,13 +510,13 @@ async function main() {
 		findings.limits.push({
 			prio: 'P1',
 			id: 'multi-no-dropdown',
-			title: 'multi_select relation: nessuna tendina (type array, paste UUID[])',
+			title: 'multi_select relation: no dropdown (array type, paste UUID[])',
 			detail:
-				'buildMapperFields salta enrichment se multi_select. UX debole per liste piccole di contributor.',
+				'buildMapperFields skips enrichment when multi_select. Weak UX for small contributor lists.',
 		});
 	}
 
-	// --- soglia 50 sedi ---
+	// --- dropdown threshold 50 seats ---
 	if (!SKIP_SEED50) {
 		let n = await countApprox(IDS.sede);
 		log('seed50', `sede count≈${n}, target≥50`);
@@ -544,49 +544,49 @@ async function main() {
 			findings.limits.push({
 				prio: 'P1',
 				id: 'dropdown-50',
-				title: 'Soglia tendina relation = 50 (API consente fino a 100; no search q= in nodo)',
+				title: 'Relation dropdown threshold = 50 (API allows up to 100; no search q= in node)',
 				detail:
-					`Con ≥50 sedi relation-options restituisce ${nOpts}. Nodo: tendina solo se <50, altrimenti “incolla UUID”. Migliorabile: alzare a 100 e/o search interattiva.`,
+					`With ≥50 seats relation-options returns ${nOpts}. Node: dropdown only if <50, otherwise “paste UUID”. Improve: raise to 100 and/or interactive search.`,
 			});
 			findings.ok.push(
-				'Comportamento ≥50 candidati confermato (niente tendina nel nodo)',
+				'≥50 candidates behaviour confirmed (no dropdown in the node)',
 			);
 		} else {
 			findings.notes.push(
-				`Dopo seed, options=${nOpts} <50 — countApprox può sottostimare; verificare vista/ACL`,
+				`After seed, options=${nOpts} <50 — countApprox may undercount; check view/ACL`,
 			);
 		}
 	} else {
-		findings.notes.push('CERVIO_SKIP_SEED50=1 — soglia 50 non riesercitata');
+		findings.notes.push('CERVIO_SKIP_SEED50=1 — threshold 50 not re-exercised');
 	}
 
 	// --- other known limits (static, from code) ---
 	findings.limits.push({
 		prio: 'P2',
 		id: 'max-pages',
-		title: 'listView pageMode=all: max 10 pagine × 500 = 5000 righe',
-		detail: 'MAX_PAGES/MAX_PAGE_LIMIT in GenericFunctions.ts — ok per automation tipiche; documentare truncazione.',
+		title: 'listView pageMode=all: max 10 pages × 500 = 5000 rows',
+		detail: 'MAX_PAGES/MAX_PAGE_LIMIT in GenericFunctions.ts — fine for typical automation; document truncation.',
 	});
 	findings.missing.push({
 		prio: 'P1',
 		id: 'relation-search',
-		title: 'Nessuna search relation interattiva in n8n',
+		title: 'No interactive relation search in n8n',
 		detail:
-			'relation-options è design-time first page. Per anagrafiche grandi serve paste UUID o alzare/ricercare.',
+			'relation-options is design-time first page. For large directories paste UUID or raise limit/search.',
 	});
 	findings.missing.push({
 		prio: 'P2',
 		id: 'admin-forms-views',
 		title: 'LoadOptions forms/views via /api/v1/admin/…',
 		detail:
-			'Token non system_admin: tendine entity/form/view fragili anche se write-schema assegnato funzionerebbe.',
+			'Non-system_admin token: entity/form/view dropdowns are fragile even if assigned write-schema would work.',
 	});
 	findings.opts.push({
 		prio: 'P1',
 		id: 'through-help',
-		title: 'Help text: campi through omessi / crea figlio sull’altra entity',
+		title: 'Help text: through fields omitted / create child on the other entity',
 		detail:
-			'Utente non vede argomenti_tag e non sa perché. Notice in description del nodo o README.',
+			'User does not see argomenti_tag and does not know why. Notice in node description or README.',
 	});
 
 	printAssessment();
@@ -595,29 +595,29 @@ async function main() {
 
 function printAssessment() {
 	console.log('\n========== ASSESSMENT ==========');
-	console.log('\n## OK / confermati');
+	console.log('\n## OK / confirmed');
 	for (const x of findings.ok) console.log(`- ${x}`);
 
-	console.log('\n## Mancanze');
+	console.log('\n## Gaps');
 	for (const x of findings.missing) {
 		console.log(`- [${x.prio}] ${x.id}: ${x.title}`);
 		console.log(`  ${x.detail}`);
 	}
 
-	console.log('\n## Limiti migliorabili');
+	console.log('\n## Improvable limits');
 	for (const x of findings.limits) {
 		console.log(`- [${x.prio}] ${x.id}: ${x.title}`);
 		console.log(`  ${x.detail}`);
 	}
 
-	console.log('\n## Ottimizzazioni');
+	console.log('\n## Optimizations');
 	for (const x of findings.opts) {
 		console.log(`- [${x.prio}] ${x.id}: ${x.title}`);
 		console.log(`  ${x.detail}`);
 	}
 
 	if (findings.notes.length) {
-		console.log('\n## Note');
+		console.log('\n## Notes');
 		for (const x of findings.notes) console.log(`- ${x}`);
 	}
 	console.log('================================\n');
