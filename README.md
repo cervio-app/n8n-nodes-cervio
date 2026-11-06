@@ -38,6 +38,17 @@ docker compose up
 # → http://localhost:5678  (N8N_CUSTOM_EXTENSIONS mounts this repo)
 ```
 
+### Cover / demo screenshot
+
+Import a 2-node workflow (Manual Trigger → Cervio), attach your credential, pick Entity/View (or Form), zoom the canvas, screenshot:
+
+| File | Use |
+|------|-----|
+| [`examples/cover-demo.workflow.json`](./examples/cover-demo.workflow.json) | **List view** — clean cover (recommended) |
+| [`examples/cover-demo-create.workflow.json`](./examples/cover-demo-create.workflow.json) | **Create** — shows the guided field mapper |
+
+In n8n: **⋯ → Import from File** → select the JSON → set **Cervio API** credential → choose Entity + View/Form.
+
 ## Operations
 
 | Group | Operation (`value`) | API (summary) | Typical scopes |
@@ -110,6 +121,7 @@ Example: PAT has `records:write` but the user has no `can_create` on the entity 
 credentials/          Cervio API credential + icons
 nodes/Cervio/         Node implementation, helpers, icons, unit tests
   __tests__/          Vitest (write-schema → resource mapper)
+examples/             Importable demo workflows (cover screenshots)
 scripts/              build helpers + live smoke (optional)
 .github/workflows/    CI + npm publish (dispatch until Trusted Publishing)
 compose.yaml          Local n8n with this package mounted
