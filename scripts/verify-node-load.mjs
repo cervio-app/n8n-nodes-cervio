@@ -62,6 +62,8 @@ const ALL_OPERATIONS = [
 	'resolveRelation',
 	'startWorkflow',
 	'getWorkflowRun',
+	'notifySelf',
+	'notifyUsers',
 ];
 
 const opProps = node.description.properties.filter((p) => p.name === 'operation');
@@ -121,8 +123,11 @@ for (const need of [
 
 const entityProp = node.description.properties.find((p) => p.name === 'entityId');
 const hideOps = entityProp?.displayOptions?.hide?.operation ?? [];
-for (const op of ['startWorkflow', 'getWorkflowRun']) {
+for (const op of ['startWorkflow', 'getWorkflowRun', 'notifySelf', 'notifyUsers']) {
 	if (!hideOps.includes(op)) throw new Error(`entityId should hide for ${op}`);
+}
+if (!resource?.options?.some((o) => o.value === 'notification')) {
+	throw new Error('missing notification resource');
 }
 
 const optionsMode = node.description.properties.find((p) => p.name === 'optionsMode');

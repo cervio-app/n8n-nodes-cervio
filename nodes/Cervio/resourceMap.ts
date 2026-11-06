@@ -1,6 +1,11 @@
 /** Maps operation → resource for Resource UX migration and defensive defaults. */
 
-export type CervioResource = 'record' | 'relation' | 'document' | 'workflow';
+export type CervioResource =
+	| 'record'
+	| 'relation'
+	| 'document'
+	| 'workflow'
+	| 'notification';
 
 export const OPERATION_RESOURCE: Record<string, CervioResource> = {
 	create: 'record',
@@ -21,6 +26,8 @@ export const OPERATION_RESOURCE: Record<string, CervioResource> = {
 	generateDocument: 'document',
 	startWorkflow: 'workflow',
 	getWorkflowRun: 'workflow',
+	notifySelf: 'notification',
+	notifyUsers: 'notification',
 };
 
 export function resourceForOperation(operation: string): CervioResource {

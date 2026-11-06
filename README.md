@@ -9,7 +9,7 @@
 
 Official [n8n](https://n8n.io/) community node for [Cervio](https://cervio.app).
 
-Connect n8n workflows to a Cervio tenant over the public REST API (`/api/v1`): entity records, documents, N:M links, upsert/resolve, and workflows. Field lists for create/update come from the form write-schema (resource mapper), not a free-form JSON body. The node is marked `usableAsTool: true` for n8n AI Agent tools.
+Connect n8n workflows to a Cervio tenant over the public REST API (`/api/v1`): entity records, documents, N:M links, upsert/resolve, workflows, and notifications. Field lists for create/update come from the form write-schema (resource mapper), not a free-form JSON body. The node is marked `usableAsTool: true` (optional REST tool for AI Agent). For the full Cervio MCP tool surface, use n8n’s built-in **MCP Client Tool** — see [AI Agent + Cervio MCP](#ai-agent--cervio-mcp).
 
 | | |
 |--|--|
@@ -105,6 +105,8 @@ Pick a **Resource**, then an **Operation** (node **typeVersion 2** only):
 | **Document** | List / Upload / Open | Metadata, multipart upload, signed URL |
 | | Generate from Template | Render a mapped document template (admin) |
 | **Workflow** | Start / Get Run Status | Manual start + admin run status |
+| **Notification** | Send to Me | Inbox (+ push if enabled) for the PAT owner |
+| | Notify Users | Up to 50 org members (admin) |
 
 **Notes**
 
@@ -112,6 +114,7 @@ Pick a **Resource**, then an **Operation** (node **typeVersion 2** only):
 - N:M **through** fields are not on the mapper — use **Link / Unlink**.
 - Relation dropdowns are capped (~50); use **Search relation** for larger sets.
 - List view defaults: options = slugs, relations = UUIDs (ready for Update).
+- **Start workflow → Additional Data:** Key/Value rows **or** a JSON object (same `data` body Cervio accepts on `POST /api/v1/workflows/:id/runs`, max 64 KiB → `$trigger.data`).
 
 ## Permissions
 
@@ -132,9 +135,10 @@ n8n  ──Bearer cpat_…──►  1) PAT scopes (Admin → API)
 | `records:read` | Get, List view/records, Search/Resolve, List/Open documents |
 | `records:write` | Create, Update, Delete, Upsert, Validate, Upload, Link/Unlink, Start workflow |
 | `admin:read` | Form / view / workflow dropdowns, Get workflow run |
-| `admin:write` | Generate document from template |
+| `admin:write` | Generate document from template; **Notify Users** |
+| `me:write` | **Send to Me** (self notification) |
 
-`*:write` implies the matching `*:read`. Scopes alone do **not** grant row access or `can_create`.
+`*:write` implies the matching `*:read`. Scopes alone do **not** grant row access or `can_create`. Org notifications must be enabled or Cervio returns `403 notifications_disabled`.
 
 ### User behind the PAT
 
@@ -142,8 +146,25 @@ The PAT impersonates its owner (entity permissions, record policies, field denia
 
 | Setup | PAT owner | Scopes |
 |-------|-----------|--------|
-| Full guided UX | `system_admin` | `admin:read`, `admin:write`, `records:read`, `records:write` |
+| Full guided UX | `system_admin` | `admin:read`, `admin:write`, `records:read`, `records:write`, `me:write` |
 | Narrow sync | Service user with entity ACL + assigned views/forms | `records:read` / `records:write` only |
+
+## AI Agent + Cervio MCP
+
+For an **AI Agent** that should call Cervio’s full MCP tool set (records, forms, workflows, admin tools filtered by PAT scopes), use n8n’s built-in **MCP Client Tool** — not a custom Cervio MCP node in this package.
+
+1. AI Agent → **Tool** → **MCP Client Tool**
+2. **Endpoint:** `https://YOUR_TENANT.cervio.app/api/mcp` (same host as the Cervio API Base URL)
+3. **Server Transport:** **HTTP Streamable** (do not use deprecated SSE)
+4. **Authentication:** **Bearer Auth** — create an n8n Bearer credential with the raw PAT `cpat_…` only (no `Bearer ` prefix)
+5. Tenant: **External API** enabled for the org; PAT scopes non-empty and adequate for the tools you need (tools outside scope disappear from `tools/list`)
+6. **Tools to Include:** All or a subset
+
+The Bearer credential is a **separate** n8n credential entry from **Cervio API** (community node limit): same PAT value, two credential rows.
+
+**Optional / narrower:** this package’s node is `usableAsTool: true`, so you can also attach **Cervio Tool** for a single fixed Resource + Operation (REST). That does not expose the full MCP surface.
+
+We intentionally do **not** ship a wrapper MCP client here: n8n owns transport and protocol updates; a thin Cervio-branded MCP Tool (reuse `cervioApi` credential, auto URL) may come later if onboarding friction justifies it.
 
 ## Compatibility
 

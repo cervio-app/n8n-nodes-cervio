@@ -2,7 +2,7 @@ import type { IDataObject, IExecuteFunctions, INodeExecutionData } from 'n8n-wor
 import { NodeApiError, NodeOperationError } from 'n8n-workflow';
 
 import { getWorkflowRunStatus, startWorkflowRun } from '../GenericFunctions';
-import { parseWorkflowDataPayload } from './helpers';
+import { resolveWorkflowStartData } from './helpers';
 
 export async function executeWorkflowOperations(
 	this: IExecuteFunctions,
@@ -35,8 +35,7 @@ export async function executeWorkflowOperations(
 					{ itemIndex: i },
 				);
 			}
-			const rawData = this.getNodeParameter('workflowData', i, {});
-			const workflowPayload = parseWorkflowDataPayload(this, rawData, i);
+			const workflowPayload = resolveWorkflowStartData(this, i);
 			const started = await startWorkflowRun.call(
 				this,
 				workflowId,

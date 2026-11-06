@@ -487,6 +487,33 @@ export async function getWorkflowRunStatus(
 	);
 }
 
+export type CervioNotifyPayload = {
+	title: string;
+	body?: string;
+	href?: string;
+	category?: string;
+	source_type?: string;
+	source_id?: string;
+};
+
+export async function notifySelf(
+	this: CervioContext,
+	payload: CervioNotifyPayload,
+): Promise<unknown> {
+	return cervioApiRequest.call(this, 'POST', '/api/v1/me/notifications', payload);
+}
+
+export async function notifyUsers(
+	this: CervioContext,
+	userIds: string[],
+	payload: CervioNotifyPayload,
+): Promise<unknown> {
+	return cervioApiRequest.call(this, 'POST', '/api/v1/notifications', {
+		user_ids: userIds,
+		...payload,
+	});
+}
+
 /** Flatten GET record or list row to one n8n item. */
 export function flattenRecordRow(record: unknown): IDataObject {
 	if (!record || typeof record !== 'object' || Array.isArray(record)) {

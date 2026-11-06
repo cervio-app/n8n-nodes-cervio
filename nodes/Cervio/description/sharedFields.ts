@@ -14,7 +14,7 @@ export const sharedFields: INodeProperties[] = [
 		default: '',
 		displayOptions: {
 			hide: {
-				operation: ['startWorkflow', 'getWorkflowRun'],
+				operation: ['startWorkflow', 'getWorkflowRun', 'notifySelf', 'notifyUsers'],
 			},
 		},
 		description: 'Only entities this token can read.',
@@ -371,6 +371,31 @@ export const sharedFields: INodeProperties[] = [
 		description: 'UUID of the record to start the workflow on.',
 	},
 	{
+		displayName: 'Additional Data Mode',
+		name: 'workflowDataMode',
+		type: 'options',
+		options: [
+			{
+				name: 'Key/Value',
+				value: 'keyValue',
+				description: 'Add fields one by one (name + value)',
+			},
+			{
+				name: 'JSON',
+				value: 'json',
+				description: 'Pass a JSON object as $trigger.data (max 64 KiB)',
+			},
+		],
+		default: 'keyValue',
+		displayOptions: {
+			show: {
+				operation: ['startWorkflow'],
+			},
+		},
+		description:
+			'How to send optional start payload. Cervio accepts a free JSON object on POST /api/v1/workflows/:id/runs.',
+	},
+	{
 		displayName: 'Additional Data',
 		name: 'workflowData',
 		type: 'fixedCollection',
@@ -380,6 +405,7 @@ export const sharedFields: INodeProperties[] = [
 		displayOptions: {
 			show: {
 				operation: ['startWorkflow'],
+				workflowDataMode: ['keyValue'],
 			},
 		},
 		options: [
@@ -395,6 +421,21 @@ export const sharedFields: INodeProperties[] = [
 		description: 'Optional key/value payload for the manual trigger.',
 	},
 	{
+		displayName: 'Additional Data (JSON)',
+		name: 'workflowDataJson',
+		type: 'json',
+		required: true,
+		default: '{}',
+		displayOptions: {
+			show: {
+				operation: ['startWorkflow'],
+				workflowDataMode: ['json'],
+			},
+		},
+		description:
+			'JSON object passed as start `data` (becomes $trigger.data). Must be an object, not an array. Max 64 KiB.',
+	},
+	{
 		displayName: 'Run ID',
 		name: 'runId',
 		type: 'string',
@@ -406,6 +447,117 @@ export const sharedFields: INodeProperties[] = [
 			},
 		},
 		description: 'invocation_id returned by Start Workflow.',
+	},
+	// --- Notification ---
+	{
+		displayName: 'Title',
+		name: 'notificationTitle',
+		type: 'string',
+		required: true,
+		default: '',
+		displayOptions: {
+			show: {
+				operation: ['notifySelf', 'notifyUsers'],
+			},
+		},
+		description: 'Notification title (max 200 characters).',
+	},
+	{
+		displayName: 'Body',
+		name: 'notificationBody',
+		type: 'string',
+		typeOptions: { rows: 3 },
+		default: '',
+		displayOptions: {
+			show: {
+				operation: ['notifySelf', 'notifyUsers'],
+			},
+		},
+		description: 'Optional body text (max 2000 characters).',
+	},
+	{
+		displayName: 'Link (href)',
+		name: 'notificationHref',
+		type: 'string',
+		default: '',
+		displayOptions: {
+			show: {
+				operation: ['notifySelf', 'notifyUsers'],
+			},
+		},
+		description: 'Optional deep link path inside the Cervio app (max 500 characters).',
+	},
+	{
+		displayName: 'Category',
+		name: 'notificationCategory',
+		type: 'options',
+		options: [
+			{ name: 'Plugin', value: 'plugin' },
+			{ name: 'Task', value: 'task' },
+			{ name: 'Workflow', value: 'workflow' },
+			{ name: 'System', value: 'system' },
+			{ name: 'Entity', value: 'entity' },
+		],
+		default: 'plugin',
+		displayOptions: {
+			show: {
+				operation: ['notifySelf', 'notifyUsers'],
+			},
+		},
+	},
+	{
+		displayName: 'Source Type',
+		name: 'notificationSourceType',
+		type: 'string',
+		default: '',
+		displayOptions: {
+			show: {
+				operation: ['notifySelf', 'notifyUsers'],
+			},
+		},
+		description: 'Optional source_type for audit / grouping (max 100 characters).',
+	},
+	{
+		displayName: 'Source ID',
+		name: 'notificationSourceId',
+		type: 'string',
+		default: '',
+		displayOptions: {
+			show: {
+				operation: ['notifySelf', 'notifyUsers'],
+			},
+		},
+		description: 'Optional idempotency key per user (max 200 characters).',
+	},
+	{
+		displayName: 'User IDs',
+		name: 'notificationUserIds',
+		type: 'fixedCollection',
+		placeholder: 'Add user',
+		typeOptions: { multipleValues: true },
+		default: {},
+		required: true,
+		displayOptions: {
+			show: {
+				operation: ['notifyUsers'],
+			},
+		},
+		options: [
+			{
+				displayName: 'User',
+				name: 'user',
+				values: [
+					{
+						displayName: 'User ID',
+						name: 'id',
+						type: 'string',
+						default: '',
+						description: 'Organization member UUID',
+					},
+				],
+			},
+		],
+		description: 'Recipients in this organization (max 50). Outside-org IDs are ignored by the API.',
 	},
 	{
 		displayName: 'Fields',

@@ -1,7 +1,7 @@
 {
   "name": "@cervio/n8n-nodes-cervio",
-  "version": "0.2.5",
-  "description": "n8n community node for Cervio — entity records, documents, N:M links, and workflows via REST /api/v1",
+  "version": "0.2.6",
+  "description": "n8n community node for Cervio — entity records, documents, N:M links, workflows, and notifications via REST /api/v1",
   "license": "MIT",
   "homepage": "https://cervio.app",
   "keywords": [

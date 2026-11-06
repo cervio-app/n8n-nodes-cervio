@@ -18,7 +18,7 @@ export class Cervio implements INodeType {
 		version: 2,
 		subtitle: '={{$parameter["resource"] + ": " + $parameter["operation"]}}',
 		description:
-			'Records, documents, N:M relations, upsert/resolve, and workflows over REST /api/v1. Guided forms for create/update; admin list for entity records.',
+			'Cervio tenant over REST /api/v1: records, documents, relations, workflows, and notifications. Guided forms for create/update. For full MCP tools on an AI Agent, use n8n MCP Client Tool → https://<tenant>/api/mcp with a Bearer PAT.',
 		defaults: {
 			name: 'Cervio',
 		},

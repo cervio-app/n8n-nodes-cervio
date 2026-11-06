@@ -10,6 +10,7 @@ export const resourceProperty: INodeProperties = {
 		{ name: 'Relation', value: 'relation' },
 		{ name: 'Document', value: 'document' },
 		{ name: 'Workflow', value: 'workflow' },
+		{ name: 'Notification', value: 'notification' },
 	],
 	default: 'record',
 };
@@ -179,5 +180,30 @@ export const operationPropertiesByResource: INodeProperties[] = [
 			},
 		],
 		default: 'startWorkflow',
+	},
+	{
+		...operationBase,
+		displayOptions: {
+			show: {
+				resource: ['notification'],
+			},
+		},
+		options: [
+			{
+				name: 'Send to Me',
+				value: 'notifySelf',
+				description:
+					'Create an in-app notification for the PAT owner (POST /api/v1/me/notifications)',
+				action: 'Notify the authenticated user',
+			},
+			{
+				name: 'Notify Users',
+				value: 'notifyUsers',
+				description:
+					'Notify up to 50 organization members (admin; POST /api/v1/notifications)',
+				action: 'Notify organization users',
+			},
+		],
+		default: 'notifySelf',
 	},
 ];

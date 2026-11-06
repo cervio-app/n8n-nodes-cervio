@@ -8,12 +8,14 @@ import {
 	executeSearchRelationBatch,
 } from './batchOps';
 import { executeDocumentOperations } from './documents';
+import { executeNotificationOperations } from './notifications';
 import { executeRecordOperations } from './records';
 import { executeRelationOperations } from './relations';
 import { executeWorkflowOperations } from './workflows';
 
 const BATCH_OPS = new Set(['searchRelation', 'listView', 'listRecords']);
 const WORKFLOW_OPS = new Set(['startWorkflow', 'getWorkflowRun']);
+const NOTIFICATION_OPS = new Set(['notifySelf', 'notifyUsers']);
 const DOCUMENT_OPS = new Set([
 	'listDocuments',
 	'uploadDocument',
@@ -62,6 +64,11 @@ export async function executeCervio(
 
 	if (WORKFLOW_OPS.has(operation)) {
 		await executeWorkflowOperations.call(this, items, operation, returnData);
+		return [returnData];
+	}
+
+	if (NOTIFICATION_OPS.has(operation)) {
+		await executeNotificationOperations.call(this, items, operation, returnData);
 		return [returnData];
 	}
 

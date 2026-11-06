@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.6] - 2026-11-06
+
+### Added
+
+- Resource **Notification**: Send to Me (`POST /api/v1/me/notifications`) and Notify Users (`POST /api/v1/notifications`).
+- Start Workflow **Additional Data Mode**: Key/Value or JSON object (max 64 KiB) for `$trigger.data`.
+- README: AI Agent + Cervio MCP via n8n **MCP Client Tool** (`/api/mcp` + Bearer PAT).
+
 ### Changed
 
 - Live smoke scripts no longer ship lab/tenant UUID defaults; require `CERVIO_SMOKE_*` env (see `.env.example`).
@@ -75,7 +83,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Scoped package `@cervio/n8n-nodes-cervio`; unscoped name deprecated.
 
-[Unreleased]: https://github.com/cervio-app/n8n-nodes-cervio/compare/v0.2.5...HEAD
+[Unreleased]: https://github.com/cervio-app/n8n-nodes-cervio/compare/v0.2.6...HEAD
+[0.2.6]: https://github.com/cervio-app/n8n-nodes-cervio/releases/tag/v0.2.6
 [0.2.5]: https://github.com/cervio-app/n8n-nodes-cervio/releases/tag/v0.2.5
 [0.2.4]: https://github.com/cervio-app/n8n-nodes-cervio/releases/tag/v0.2.4
 [0.2.3]: https://github.com/cervio-app/n8n-nodes-cervio/releases/tag/v0.2.3
