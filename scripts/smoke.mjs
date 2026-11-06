@@ -1,16 +1,18 @@
 #!/usr/bin/env node
 /**
- * Smoke against a live Cervio tenant (default: https://dev.cervio.app).
- * Requires CERVIO_PAT (system_admin with admin:read + records:read + records:write).
+ * Smoke against a live Cervio tenant.
+ * Requires CERVIO_BASE_URL + CERVIO_PAT (system_admin with admin:read + records:read + records:write).
  *
  * Flow: me → entities → TESTMCP forms/views → create → list view (paginated) →
  * update stato → verify merge.
  */
 
-const BASE = (process.env.CERVIO_BASE_URL || 'https://dev.cervio.app').replace(
-	/\/+$/,
-	'',
-);
+const BASE_RAW = (process.env.CERVIO_BASE_URL || '').trim();
+if (!BASE_RAW) {
+	console.error('Set CERVIO_BASE_URL=https://YOUR_TENANT.cervio.app');
+	process.exit(1);
+}
+const BASE = BASE_RAW.replace(/\/+$/, '');
 const PAT = process.env.CERVIO_PAT || '';
 const ENTITY_ID =
 	process.env.CERVIO_SMOKE_ENTITY_ID ||

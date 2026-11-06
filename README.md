@@ -171,17 +171,51 @@ Poll invocation / instance status.
 
 1. **Node.js ≥ 20**
 2. An **n8n** instance
-3. Cervio **Personal Access Token** (`cpat_…`) from **Admin → API**
-   - Typical scopes: `admin:read`, `admin:write`, `records:read`, `records:write`
-   - **system_admin** user for admin pickers (forms, views, workflows, entity list records, generate document, workflow run status)
+3. Cervio **Personal Access Token** (`cpat_…`) from **Admin → API** (see [Permissions](#permissions) below)
 4. External API enabled for the organization
+
+## Permissions
+
+The node does **not** have its own ACL. Every call is Cervio REST with the PAT: Cervio applies **two layers**.
+
+### 1. Token scopes (API gate)
+
+Declared on the PAT in Admin → API. Missing scope → `401` / scope error before any entity logic.
+
+| Scope | What it unlocks in this node |
+|-------|------------------------------|
+| `records:read` | Get / list view / search relation / resolve / list documents / open document |
+| `records:write` | Create / update / delete / upsert / validate draft / upload / link / unlink / start workflow |
+| `admin:read` | Form / view / workflow **dropdowns** (`/api/v1/admin/…`), get workflow run status |
+| `admin:write` | Generate document from template (admin route) |
+
+`*:write` implies the matching `*:read` on Cervio’s API guard.
+
+### 2. User behind the token (impersonation)
+
+The PAT runs **as the user who owns it**. Entity permissions, record policies (row visibility), field denials, form/view assignments, document capabilities, and manual-workflow ACL still apply.
+
+- Same user would not see a record in the UI → Get / List view returns not found / empty
+- No `can_create` on the entity → Create fails even with `records:write`
+- Form not assigned → write-schema / create via that form fails
+- Start workflow → same roles/groups as UI “Avvia workflow”, not “any admin token”
+
+### Practical setups
+
+| Use case | Suggested PAT owner + scopes |
+|----------|------------------------------|
+| Full guided UX in n8n (all pickers, generate doc, run status, list entity records) | User with **`system_admin`** + scopes `admin:read`, `admin:write`, `records:read`, `records:write` |
+| Integration that only reads/writes through assigned views/forms | Non-admin user with the right entity ACL + `records:read` / `records:write` only. Prefer **List view** (not List records). Fill entity/form/view UUIDs by hand or from a previous admin step — admin dropdowns need `admin:read` + system_admin |
+
+There is no separate “n8n plugin permission” in Cervio Admin: configure users, groups, entity ACL, and the PAT as for any other API client.
 
 ## Installation
 
 ### From source (development)
 
 ```bash
-cd integrations/n8n-nodes-cervio   # or clone the published package root
+git clone https://github.com/cervio-app/n8n-nodes-cervio.git
+cd n8n-nodes-cervio
 npm install
 npm run build
 npm link
@@ -192,6 +226,8 @@ npm link n8n-nodes-cervio
 ```
 
 Restart n8n. The **Cervio** node and **Cervio API** credential appear in the palette.
+
+Credential **Base URL** must be the tenant host (e.g. `https://acme.cervio.app`) — there is no default tenant.
 
 ### Docker Compose
 
@@ -209,22 +245,17 @@ npm run lint
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md) for Conventional Commits, PR expectations, **SemVer tags (`vX.Y.Z`)**, and the npm publish workflow.
 
-Live smoke:
+Live smoke (set your tenant; copy [`.env.example`](./.env.example)):
 
 ```bash
-CERVIO_BASE_URL=https://dev.cervio.app CERVIO_PAT=cpat_… npm run smoke
-CERVIO_BASE_URL=… CERVIO_PAT=… npm run smoke:extended   # get, validate-draft, list, upsert, resolve, delete cleanup
-CERVIO_BASE_URL=… CERVIO_PAT=… npm run smoke:relations
+export CERVIO_BASE_URL=https://YOUR_TENANT.cervio.app
+export CERVIO_PAT=cpat_…
+npm run smoke
+npm run smoke:extended   # get, validate-draft, list, upsert, resolve, delete cleanup
+npm run smoke:relations
 ```
 
-Set `CERVIO_SMOKE_KEEP=1` to leave the smoke record; `CERVIO_SMOKE_DELETE_ID` to also DELETE another disposable id.
-
-## Scopes summary
-
-| Area | Typical scopes | Notes |
-|------|----------------|-------|
-| Records CRUD, views, docs, links, upsert, resolve, start workflow | `records:read`, `records:write` | List entity records needs admin role |
-| Form/view/workflow pickers, generate doc, workflow run status | `admin:read`, `admin:write` | system_admin user |
+Optional: `CERVIO_SMOKE_KEEP=1` leaves the smoke record; `CERVIO_SMOKE_DELETE_ID` also DELETEs another disposable id.
 
 ## Known limits
 
@@ -232,7 +263,7 @@ Set `CERVIO_SMOKE_KEEP=1` to leave the smoke record; `CERVIO_SMOKE_DELETE_ID` to
 - **Template ID** has no REST catalog in v0.2 — paste UUID from Admin
 - Relation dropdown cap (~50); use **Search relation** for larger sets
 - **List view** all-pages cap: 10 pages × 500 rows
-- **Upsert / resolve / N:M links / generate document** need the Wave B `/api/v1` routes on the tenant app (not only the community node). Until that deploy lands, those ops return 404/405; `npm run smoke:extended` warns and continues.
+- **Upsert / resolve / N:M links / generate document** need the matching `/api/v1` routes on the tenant app (Cervio develop/release that includes them). `npm run smoke:extended` warns on 404/405 if the tenant is older.
 
 ## References
 

@@ -5,10 +5,12 @@
  * Wave B routes (upsert/resolve/…) may 404/405 until the tenant app is deployed;
  * those steps are then skipped with a warning.
  */
-const BASE = (process.env.CERVIO_BASE_URL || 'https://dev.cervio.app').replace(
-	/\/+$/,
-	'',
-);
+const BASE_RAW = (process.env.CERVIO_BASE_URL || '').trim();
+if (!BASE_RAW) {
+	console.error('Set CERVIO_BASE_URL=https://YOUR_TENANT.cervio.app');
+	process.exit(1);
+}
+const BASE = BASE_RAW.replace(/\/+$/, '');
 const PAT = process.env.CERVIO_PAT || '';
 const ENTITY_ID =
 	process.env.CERVIO_SMOKE_ENTITY_ID ||

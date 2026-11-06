@@ -11,10 +11,12 @@
  * Prints LIMITS / GAPS assessment at the end (exit 0 if baseline N:1/1:1/1:N ok).
  */
 
-const BASE = (process.env.CERVIO_BASE_URL || 'https://dev.cervio.app').replace(
-	/\/+$/,
-	'',
-);
+const BASE_RAW = (process.env.CERVIO_BASE_URL || '').trim();
+if (!BASE_RAW) {
+	console.error('Set CERVIO_BASE_URL=https://YOUR_TENANT.cervio.app');
+	process.exit(1);
+}
+const BASE = BASE_RAW.replace(/\/+$/, '');
 const PAT = process.env.CERVIO_PAT || '';
 
 const IDS = {

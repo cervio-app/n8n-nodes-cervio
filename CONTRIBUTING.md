@@ -10,11 +10,13 @@ npm run verify
 npm run lint
 ```
 
-Live smoke against a Cervio tenant (optional):
+Live smoke against a Cervio tenant (optional; copy `.env.example`):
 
 ```bash
-CERVIO_BASE_URL=https://dev.cervio.app CERVIO_PAT=cpat_… npm run smoke
-CERVIO_BASE_URL=… CERVIO_PAT=… npm run smoke:extended
+export CERVIO_BASE_URL=https://YOUR_TENANT.cervio.app
+export CERVIO_PAT=cpat_…
+npm run smoke
+npm run smoke:extended
 ```
 
 ## Commits
