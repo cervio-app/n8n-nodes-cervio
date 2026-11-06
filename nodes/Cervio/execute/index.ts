@@ -37,15 +37,15 @@ export async function executeCervio(
 	const returnData: INodeExecutionData[] = [];
 	const operation = this.getNodeParameter('operation', 0) as string;
 
-	const typeVersion = Number((this.getNode().typeVersion as number | undefined) ?? 1);
-	if (typeVersion >= 2) {
-		const resource = this.getNodeParameter('resource', 0) as string;
-		if (resource && resourceForOperation(operation) !== resource) {
-			throw new NodeOperationError(
-				this.getNode(),
-				`Operation "${operation}" does not match resource "${resource}". Change resource or operation.`,
-			);
-		}
+	let resource = this.getNodeParameter('resource', 0, '') as string;
+	if (!resource) {
+		resource = resourceForOperation(operation);
+	}
+	if (resource && resourceForOperation(operation) !== resource) {
+		throw new NodeOperationError(
+			this.getNode(),
+			`Operation "${operation}" does not match resource "${resource}". Change resource or operation.`,
+		);
 	}
 
 	if (BATCH_OPS.has(operation)) {

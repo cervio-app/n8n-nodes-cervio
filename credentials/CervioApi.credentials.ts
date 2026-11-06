@@ -16,7 +16,7 @@ export class CervioApi implements ICredentialType {
 		dark: 'file:cervio.mono.dark.svg',
 	};
 
-	documentationUrl = 'https://github.com/cervio-app/n8n-nodes-cervio#readme';
+	documentationUrl = 'https://github.com/cervio-app/n8n-nodes-cervio#installation';
 
 	properties: INodeProperties[] = [
 		{

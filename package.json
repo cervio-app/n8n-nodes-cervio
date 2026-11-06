@@ -1,19 +1,21 @@
 {
   "name": "@cervio/n8n-nodes-cervio",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "description": "n8n community node for Cervio — entity records, documents, N:M links, and workflows via REST /api/v1",
   "license": "MIT",
-  "homepage": "https://github.com/cervio-app/n8n-nodes-cervio#readme",
+  "homepage": "https://cervio.app",
   "keywords": [
     "n8n-community-node-package",
+    "n8n-nodes",
     "n8n",
     "cervio",
     "crm",
-    "workflow"
+    "workflow",
+    "automation"
   ],
   "author": {
     "name": "Cervio",
-    "email": "infra@cervio.app"
+    "email": "dev@cervio.app"
   },
   "repository": {
     "type": "git",

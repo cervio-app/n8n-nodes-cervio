@@ -39,8 +39,8 @@ if (!cred.test?.request?.url?.includes('/api/v1/me')) throw new Error('credentia
 
 const ver = node.description.version;
 const verArr = Array.isArray(ver) ? ver : [ver];
-if (!verArr.includes(1) || !verArr.includes(2)) {
-	throw new Error(`expected node version to include 1 and 2, got ${JSON.stringify(ver)}`);
+if (verArr.length !== 1 || verArr[0] !== 2) {
+	throw new Error(`expected node version 2 only, got ${JSON.stringify(ver)}`);
 }
 
 const ALL_OPERATIONS = [
@@ -75,12 +75,20 @@ const resource = node.description.properties.find((p) => p.name === 'resource');
 if (!resource?.options?.some((o) => o.value === 'record')) {
 	throw new Error('missing resource parameter');
 }
-const resourceV2 = resource.displayOptions?.show?.['@version'];
-if (!Array.isArray(resourceV2) || !resourceV2.includes(2)) {
-	throw new Error('resource should be shown for node version 2');
+if (resource.displayOptions?.show?.['@version']) {
+	throw new Error('resource must not be gated by @version (node is version 2 only)');
 }
 if (opProps.length < 4) {
 	throw new Error(`expected at least 4 operation groups by resource, got ${opProps.length}`);
+}
+for (const block of opProps) {
+	const res = block.displayOptions?.show?.resource;
+	if (!Array.isArray(res) || res.length === 0) {
+		throw new Error('operation block missing displayOptions.show.resource');
+	}
+	if (block.displayOptions?.show?.['@version']) {
+		throw new Error('operation blocks must not use @version (node is version 2 only)');
+	}
 }
 
 const mappers = node.description.properties.filter((p) => p.type === 'resourceMapper');

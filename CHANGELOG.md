@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.5] - 2026-11-06
+
+### Changed
+
+- **Breaking:** node `typeVersion` is **2 only** (Resource + Operation). Flat typeVersion 1 UI removed; re-open / upgrade existing Cervio nodes in the editor if needed.
+- Public contact / package `author.email` → `dev@cervio.app`.
+- `package.json` `homepage` → `https://cervio.app`; credential / codex docs URL → README `#installation`.
+- README: CI + made-by badges, Website / Issues / Changelog links; Contributor Covenant `CODE_OF_CONDUCT.md`.
+
 ## [0.2.4] - 2026-11-06
 
 ### Added
@@ -60,7 +69,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Scoped package `@cervio/n8n-nodes-cervio`; unscoped name deprecated.
 
-[Unreleased]: https://github.com/cervio-app/n8n-nodes-cervio/compare/v0.2.4...HEAD
+[Unreleased]: https://github.com/cervio-app/n8n-nodes-cervio/compare/v0.2.5...HEAD
+[0.2.5]: https://github.com/cervio-app/n8n-nodes-cervio/releases/tag/v0.2.5
 [0.2.4]: https://github.com/cervio-app/n8n-nodes-cervio/releases/tag/v0.2.4
 [0.2.3]: https://github.com/cervio-app/n8n-nodes-cervio/releases/tag/v0.2.3
 [0.2.2]: https://github.com/cervio-app/n8n-nodes-cervio/releases/tag/v0.2.2

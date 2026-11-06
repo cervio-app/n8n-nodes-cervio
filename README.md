@@ -1,7 +1,9 @@
 # @cervio/n8n-nodes-cervio
 
 [![npm version](https://img.shields.io/npm/v/@cervio/n8n-nodes-cervio.svg)](https://www.npmjs.com/package/@cervio/n8n-nodes-cervio)
+[![CI](https://github.com/cervio-app/n8n-nodes-cervio/actions/workflows/ci.yml/badge.svg)](https://github.com/cervio-app/n8n-nodes-cervio/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE.md)
+[![made by cervio.app](https://img.shields.io/badge/made%20by-cervio.app-007ec6)](https://cervio.app)
 
 ![Cervio n8n node — create a record then list via view](./media/cervio-create-list-workflow.gif)
 
@@ -11,9 +13,14 @@ Connect n8n workflows to a Cervio tenant over the public REST API (`/api/v1`): e
 
 | | |
 |--|--|
+| **Website** | [cervio.app](https://cervio.app) |
 | **npm** | [`@cervio/n8n-nodes-cervio`](https://www.npmjs.com/package/@cervio/n8n-nodes-cervio) |
 | **Source** | [github.com/cervio-app/n8n-nodes-cervio](https://github.com/cervio-app/n8n-nodes-cervio) |
+| **Issues** | [GitHub Issues](https://github.com/cervio-app/n8n-nodes-cervio/issues) |
+| **Changelog** | [CHANGELOG.md](./CHANGELOG.md) |
 | **Node type** | `@cervio/n8n-nodes-cervio.cervio` |
+
+Maintained by **Cervio**. Support: [Issues](https://github.com/cervio-app/n8n-nodes-cervio/issues) or **dev@cervio.app**.
 
 > **Migration:** the unscoped package `n8n-nodes-cervio` is deprecated. Install `@cervio/n8n-nodes-cervio` and re-select the Cervio credential / node if n8n cached the old type name.
 
@@ -83,12 +90,7 @@ All operations use this credential.
 
 ## Operations
 
-**Node typeVersion 2 (default for new nodes):** pick a **Resource**, then an **Operation**.  
-**TypeVersion 1 (existing workflows):** flat Operation list — no Resource field; keep working as before. Upgrade the node in the editor when you want Resource grouping.
-
-Operation **values** (`create`, `listView`, …) are stable across versions.
-
-Pick a **Resource**, then an **Operation** (on v2):
+Pick a **Resource**, then an **Operation** (node **typeVersion 2** only):
 
 | Resource | Operation | Description |
 |----------|-----------|-------------|
@@ -150,7 +152,7 @@ The PAT impersonates its owner (entity permissions, record policies, field denia
 | n8n | Community nodes API v1 (`n8nNodesApiVersion: 1`); local Compose pin `n8nio/n8n:2.47.2` |
 | Node.js | ≥ 20 (build / smoke); CI uses Node 22 |
 | Cervio | Tenant with `/api/v1` and External API enabled |
-| Node typeVersion | `1` (flat ops) and `2` (Resource + ops) |
+| Node typeVersion | **2** only (Resource + Operation) |
 
 ## Development
 
@@ -179,6 +181,10 @@ npm run smoke:extended
 - Nested child create = two Creates (parent, then child with FK)
 - Generate document needs a mapped template UUID (no public template catalog yet)
 - List view “all pages”: max 10 × 500 rows
+
+## Code of Conduct
+
+See [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md).
 
 ## References
 

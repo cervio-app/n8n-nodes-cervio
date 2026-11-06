@@ -15,8 +15,8 @@ export class Cervio implements INodeType {
 		name: 'cervio',
 		icon: { light: 'file:cervio.mono.light.svg', dark: 'file:cervio.mono.dark.svg' },
 		group: ['transform'],
-		version: [1, 2],
-		subtitle: '={{$parameter["operation"]}}',
+		version: 2,
+		subtitle: '={{$parameter["resource"] + ": " + $parameter["operation"]}}',
 		description:
 			'Records, documents, N:M relations, upsert/resolve, and workflows over REST /api/v1. Guided forms for create/update; admin list for entity records.',
 		defaults: {

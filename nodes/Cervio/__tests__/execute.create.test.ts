@@ -48,7 +48,7 @@ describe('executeCervio create', () => {
 		expect(item.pairedItem).toEqual({ item: 0 });
 	});
 
-	it('rejects resource/operation mismatch on typeVersion 2', async () => {
+	it('rejects resource/operation mismatch', async () => {
 		const ctx = mockExecute({
 			operation: 'create',
 			resource: 'document',

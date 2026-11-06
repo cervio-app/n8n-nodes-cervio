@@ -54,27 +54,21 @@ const resource = cervioProperties.find((p) => p.name === 'resource');
 if (!resource) fail('missing resource property');
 
 const opBlocks = cervioProperties.filter((p) => p.name === 'operation');
-if (opBlocks.length < 2) {
-	fail(`expected ≥2 operation property blocks (v1 + v2), got ${opBlocks.length}`);
+if (opBlocks.length < 4) {
+	fail(`expected ≥4 operation property blocks (one per resource), got ${opBlocks.length}`);
 }
 
-const v2Ops = opBlocks.filter((b) =>
-	(b.displayOptions?.show?.['@version'] ?? []).some((v) => v === 2 || v === '2'),
-);
-const v1Ops = opBlocks.filter((b) =>
-	(b.displayOptions?.show?.['@version'] ?? []).some((v) => v === 1 || v === '1'),
-);
-if (v2Ops.length < 4) {
-	fail(`expected ≥4 v2 operation blocks (one per resource), got ${v2Ops.length}`);
-}
-if (v1Ops.length < 1) {
-	fail('expected a v1 flat operation block for legacy workflows');
-}
-for (const block of v2Ops) {
+for (const block of opBlocks) {
+	if (block.displayOptions?.show?.['@version']) {
+		fail('operation block must not use @version (node is version 2 only)');
+	}
 	const res = block.displayOptions?.show?.resource;
 	if (!Array.isArray(res) || res.length === 0) {
-		fail('v2 operation block missing displayOptions.show.resource');
+		fail('operation block missing displayOptions.show.resource');
 	}
+}
+if (resource.displayOptions?.show?.['@version']) {
+	fail('resource must not be gated by @version (node is version 2 only)');
 }
 // Official plugin: >5 ops is only an error when there is NO resource field.
 const anyBlockOverFive = opBlocks.some((b) => (b.options || []).length > 5);
