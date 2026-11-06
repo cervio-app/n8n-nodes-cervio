@@ -1,0 +1,78 @@
+# Publishes this community node to npm (with provenance).
+#
+# Tag convention: annotated git tags vX.Y.Z (e.g. v0.2.0), matching package.json.
+#
+# Currently: workflow_dispatch only — enable the `push.tags` trigger below after
+# npm Trusted Publishing (or NPM_TOKEN) is configured, so version tags do not
+# fail Actions before the package exists on the registry.
+#
+# One-time setup (OIDC — preferred):
+# 1. Create the empty package on npmjs.com (or publish once manually)
+# 2. Package settings → Trusted Publishers → GitHub Actions
+#    owner: cervio-app  repo: n8n-nodes-cervio  workflow: publish.yml
+# 3. Uncomment the `push.tags` block in `on:` below
+# 4. Leave NPM_TOKEN unset (OIDC) — or set secret NPM_TOKEN as fallback
+#
+# Release process:
+#   1. Bump package.json "version" (SemVer)
+#   2. Commit: chore(release): vX.Y.Z
+#   3. git tag -a vX.Y.Z -m "vX.Y.Z" && git push origin main --follow-tags
+#   4. gh release create vX.Y.Z --generate-notes
+#   5. Run this workflow (dispatch) or let the tag trigger publish when enabled
+
+name: Publish
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Git tag to check out and publish (e.g. v0.2.0). Empty = current default branch HEAD.'
+        required: false
+        default: ''
+  # Uncomment after Trusted Publishing / NPM_TOKEN is configured:
+  # push:
+  #   tags:
+  #     - 'v*.*.*'
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  publish:
+    name: Publish to npm
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag != '' && inputs.tag || github.ref }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
+
+      - name: Verify
+        run: npm run verify
+
+      - name: Publish
+        run: |
+          set -euo pipefail
+          if [ -n "${NPM_TOKEN:-}" ]; then
+            npm config set "//registry.npmjs.org/:_authToken=${NPM_TOKEN}"
+          fi
+          npm publish --access public --provenance
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

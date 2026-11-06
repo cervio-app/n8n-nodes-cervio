@@ -204,7 +204,10 @@ npm install
 npm run build
 npm test
 npm run verify
+npm run lint
 ```
+
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for Conventional Commits, PR expectations, **SemVer tags (`vX.Y.Z`)**, and the npm publish workflow.
 
 Live smoke:
 
