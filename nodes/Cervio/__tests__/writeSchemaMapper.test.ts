@@ -10,7 +10,7 @@ import {
 	writeSchemaToMapperFields,
 	type WriteDiscoveryField,
 	type WriteDiscoverySchema,
-} from '../nodes/Cervio/writeSchemaMapper';
+} from '../writeSchemaMapper';
 
 const fixture = JSON.parse(
 	readFileSync(
