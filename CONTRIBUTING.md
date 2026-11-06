@@ -51,4 +51,14 @@ gh release create v0.3.0 --generate-notes
 # npm: after Trusted Publishing is set on npmjs.com for this repo,
 # uncomment push.tags in .github/workflows/publish.yml
 # or run Actions → Publish → workflow_dispatch with tag v0.3.0
+
+npm publish --access public
+```
+
+Published package: [`@cervio/n8n-nodes-cervio`](https://www.npmjs.com/package/@cervio/n8n-nodes-cervio) (`publishConfig.access=public`).
+
+After the first scoped publish, deprecate the legacy unscoped name:
+
+```bash
+npm deprecate n8n-nodes-cervio "Use @cervio/n8n-nodes-cervio instead"
 ```

@@ -4,7 +4,12 @@
     "module": "commonjs",
     "moduleResolution": "node",
     "target": "es2019",
-    "lib": ["es2019", "es2020", "es2022.error", "dom"],
+    "lib": [
+      "es2019",
+      "es2020",
+      "es2022.error",
+      "dom"
+    ],
     "removeComments": true,
     "useUnknownInCatchVariables": false,
     "forceConsistentCasingInFileNames": true,
@@ -20,6 +25,15 @@
     "skipLibCheck": true,
     "outDir": "./dist/"
   },
-  "include": ["credentials/**/*", "nodes/**/*", "types/**/*"],
-  "exclude": ["node_modules", "dist", "**/__tests__"]
+  "include": [
+    "credentials/**/*",
+    "nodes/**/*",
+    "types/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "**/__tests__/**",
+    "**/*.test.ts"
+  ]
 }

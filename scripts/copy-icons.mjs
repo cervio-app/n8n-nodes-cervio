@@ -7,6 +7,7 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 function copyTree(srcRoot, distRoot) {
 	function walk(dir, rel = '') {
 		for (const name of readdirSync(dir)) {
+			if (name === '__tests__' || name === 'node_modules') continue;
 			const full = join(dir, name);
 			const nextRel = rel ? `${rel}/${name}` : name;
 			if (statSync(full).isDirectory()) {

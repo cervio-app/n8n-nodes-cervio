@@ -1,5 +1,5 @@
 {
-  "node": "n8n-nodes-cervio.cervio",
+  "node": "@cervio/n8n-nodes-cervio.cervio",
   "nodeVersion": "1.0",
   "codexVersion": "1.0",
   "categories": ["Data & Storage"],

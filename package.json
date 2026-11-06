@@ -1,13 +1,15 @@
 {
-  "name": "n8n-nodes-cervio",
+  "name": "@cervio/n8n-nodes-cervio",
   "version": "0.2.0",
-  "description": "n8n community node for Cervio — records, views, documents, N:M links, upsert/resolve, workflows (REST /api/v1)",
+  "description": "n8n community node for Cervio — entity records, documents, N:M links, and workflows via REST /api/v1",
   "license": "MIT",
-  "homepage": "https://cervio.app",
+  "homepage": "https://github.com/cervio-app/n8n-nodes-cervio#readme",
   "keywords": [
     "n8n-community-node-package",
     "n8n",
-    "cervio"
+    "cervio",
+    "crm",
+    "workflow"
   ],
   "author": {
     "name": "Cervio",
@@ -20,6 +22,9 @@
   "bugs": {
     "url": "https://github.com/cervio-app/n8n-nodes-cervio/issues"
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsc && node scripts/copy-icons.mjs",
     "build:watch": "tsc --watch",
@@ -29,10 +34,12 @@
     "smoke:relations": "node scripts/smoke-relations.mjs",
     "smoke:extended": "node scripts/smoke-extended.mjs",
     "verify": "node scripts/verify-node-load.mjs",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "prepublishOnly": "npm run build && npm test && npm run verify"
   },
   "files": [
-    "dist"
+    "dist",
+    "media"
   ],
   "n8n": {
     "n8nNodesApiVersion": 1,

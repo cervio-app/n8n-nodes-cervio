@@ -1,24 +1,50 @@
-# n8n-nodes-cervio
+# @cervio/n8n-nodes-cervio
 
-Community node for [n8n](https://n8n.io/) that talks to a [Cervio](https://cervio.app) tenant over the public REST API (`/api/v1`).
+[![npm version](https://img.shields.io/npm/v/@cervio/n8n-nodes-cervio.svg)](https://www.npmjs.com/package/@cervio/n8n-nodes-cervio)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE.md)
 
-One node (**Cervio**) + one credential (**Cervio API**). Field lists come from the form write-schema (resource mapper), not free-form JSON. Marked `usableAsTool: true` for n8n AI Agent tools.
+![Cervio n8n node — create a record then list via view](./media/cervio-create-list-workflow.gif)
+
+Official [n8n](https://n8n.io/) community node for [Cervio](https://cervio.app).
+
+Connect n8n workflows to a Cervio tenant over the public REST API (`/api/v1`): entity records, documents, N:M links, upsert/resolve, and workflows. Field lists for create/update come from the form write-schema (resource mapper), not a free-form JSON body. The node is marked `usableAsTool: true` for n8n AI Agent tools.
 
 | | |
 |--|--|
-| Package | `n8n-nodes-cervio` |
-| Version | see `package.json` / [Releases](https://github.com/cervio-app/n8n-nodes-cervio/releases) |
-| License | [MIT](./LICENSE.md) |
+| **npm** | [`@cervio/n8n-nodes-cervio`](https://www.npmjs.com/package/@cervio/n8n-nodes-cervio) |
+| **Source** | [github.com/cervio-app/n8n-nodes-cervio](https://github.com/cervio-app/n8n-nodes-cervio) |
+| **Node type** | `@cervio/n8n-nodes-cervio.cervio` |
 
-## Quick start
+> **Migration:** the unscoped package `n8n-nodes-cervio` is deprecated. Install `@cervio/n8n-nodes-cervio` and re-select the Cervio credential / node if n8n cached the old type name.
 
-1. Create a PAT in Cervio **Admin → API** (see [Permissions](#permissions)).
-2. In n8n, add credential **Cervio API**:
-   - **Base URL** = tenant host only, e.g. `https://acme.cervio.app` (required; no default)
-   - **Personal Access Token** = `cpat_…`
-3. Drop a **Cervio** node and pick an operation.
+## Prerequisites
 
-### Install (local / custom extensions)
+- Node.js **≥ 20**
+- An **n8n** instance (self-hosted, desktop, or Cloud with community packages enabled)
+- A Cervio **Personal Access Token** (`cpat_…`) from **Admin → API**
+- External API access enabled for the organization
+
+## Installation
+
+### n8n UI (recommended)
+
+1. Open **Settings → Community nodes**
+2. Install `@cervio/n8n-nodes-cervio`
+3. Restart n8n if prompted
+
+### npm + custom folder
+
+```bash
+npm install -g @cervio/n8n-nodes-cervio
+
+mkdir -p ~/.n8n/custom
+cd ~/.n8n/custom
+npm link @cervio/n8n-nodes-cervio
+```
+
+Restart n8n, then add the **Cervio** node from the palette.
+
+### From source
 
 ```bash
 git clone https://github.com/cervio-app/n8n-nodes-cervio.git
@@ -27,59 +53,50 @@ npm install && npm run build
 npm link
 
 mkdir -p ~/.n8n/custom && cd ~/.n8n/custom
-npm link n8n-nodes-cervio
+npm link @cervio/n8n-nodes-cervio
 ```
 
-Restart n8n. Or run a disposable n8n against this folder:
+### Docker Compose (local smoke)
 
 ```bash
 npm run build
 docker compose up
-# → http://localhost:5678  (N8N_CUSTOM_EXTENSIONS mounts this repo)
+# → http://localhost:5678
 ```
 
-### Cover / demo screenshot
+## Credentials
 
-Import a 2-node workflow (Manual Trigger → Cervio), attach your credential, pick Entity/View (or Form), zoom the canvas, screenshot:
+Create a **Cervio API** credential in n8n:
 
-| File | Use |
-|------|-----|
-| [`examples/cover-demo.workflow.json`](./examples/cover-demo.workflow.json) | **List view** — clean cover (recommended) |
-| [`examples/cover-demo-create.workflow.json`](./examples/cover-demo-create.workflow.json) | **Create** — shows the guided field mapper |
+| Field | Example | Notes |
+|-------|---------|--------|
+| **Base URL** | `https://acme.cervio.app` | Tenant host only — required, no default |
+| **Personal Access Token** | `cpat_…` | From Cervio **Admin → API** |
 
-In n8n: **⋯ → Import from File** → select the JSON → set **Cervio API** credential → choose Entity + View/Form.
+All operations use this credential.
 
 ## Operations
 
-| Group | Operation (`value`) | API (summary) | Typical scopes |
-|-------|---------------------|---------------|----------------|
-| Records | `create` | `POST …/entities/{id}/records` | `records:write` |
-| | `update` | `PATCH …/records/{id}` (+ optional `multi_value_modes`) | `records:write` |
-| | `get` | `GET …/records/{id}` | `records:read` |
-| | `delete` | `DELETE …/records/{id}` (soft) | `records:write` |
-| | `upsert` | `POST …/records/upsert` (`match_field`) | `records:write` |
-| | `validateDraft` | `POST …/forms/{name}/validate-draft` | `records:write`¹ |
-| | `listView` | `GET …/views/{id}/records` (cursor pages) | `records:read` |
-| | `listRecords` | `GET …/entities/{id}/records` (`filter[f]=eq.x`, **admin**) | `records:read` + `system_admin` |
-| Relations | `searchRelation` | `GET …/relation-options?q=&limit=` | `records:read` |
-| | `resolveRelation` | `POST …/resolve` | `records:read` |
-| | `linkRecords` / `unlinkRecords` | `POST`/`DELETE …/fields/{through}/links` | `records:write` |
-| Documents | `listDocuments` | `GET …/documents` | `records:read` |
-| | `uploadDocument` | `POST …/documents` (multipart / binary) | `records:write` |
-| | `openDocument` | `GET …/documents/{id}/open` → `signed_url` | `records:read` |
-| | `generateDocument` | `POST …/documents/generate` | `admin:write` + `system_admin` |
-| Workflows | `startWorkflow` | `POST …/workflows/{id}/runs` | `records:write` + trigger ACL |
-| | `getWorkflowRun` | `GET …/admin/workflows/{id}/runs/{runId}` | `admin:read` + `system_admin` |
-
-¹ Route uses the write-scope guard; dry-run does not persist.
+| Group | Operation | Description |
+|-------|-----------|-------------|
+| **Records** | Create / Update / Get / Delete | CRUD through an assigned form mask |
+| | Upsert | Natural-key create-or-update (`match_field`) |
+| | Validate draft | Dry-run formulas / required fields |
+| | List view | Read via an assigned list view (cursor pages) |
+| | List records | Admin entity list with `filter[field]=eq.value` |
+| **Relations** | Search relation | Browse/search relation candidates (`q`, limit ≤ 100) |
+| | Resolve relation | Match scalar keys → record UUIDs |
+| | Link / Unlink | N:M through-field links |
+| **Documents** | List / Upload / Open | Metadata, multipart upload, signed URL |
+| | Generate | Render a mapped document template (admin) |
+| **Workflows** | Start / Get run | Manual start + admin run status |
 
 **Notes**
 
-- Create / Update / Upsert / Validate draft: pick **Entity** → **Form**, then the resource mapper.
-- N:M **through** fields are not on the mapper — use **Link / Unlink** (or Create on the junction entity).
+- **Create / Update / Upsert / Validate:** pick **Entity → Form**, then the resource mapper.
+- N:M **through** fields are not on the mapper — use **Link / Unlink**.
 - Relation dropdowns are capped (~50); use **Search relation** for larger sets.
-- List view defaults: options = slugs, relations = uuids (ready for Update).
-- Generate document: paste a mapped **template UUID** (no public template catalog in v1 yet).
+- List view defaults: options = slugs, relations = UUIDs (ready for Update).
 
 ## Permissions
 
@@ -93,84 +110,68 @@ n8n  ──Bearer cpat_…──►  1) PAT scopes (Admin → API)
                               │  fail → 403 / 404 / empty / validation
 ```
 
-### Layer 1 — Token scopes
+### Token scopes
 
-| Scope | Opens (in this node) |
-|-------|----------------------|
-| `records:read` | Get, List view/records, Search/Resolve relation, List/Open documents |
-| `records:write` | Create, Update, Delete, Upsert, Validate draft, Upload, Link/Unlink, Start workflow |
-| `admin:read` | Form / view / workflow **dropdowns**, Get workflow run |
+| Scope | Used for |
+|-------|----------|
+| `records:read` | Get, List view/records, Search/Resolve, List/Open documents |
+| `records:write` | Create, Update, Delete, Upsert, Validate, Upload, Link/Unlink, Start workflow |
+| `admin:read` | Form / view / workflow dropdowns, Get workflow run |
 | `admin:write` | Generate document from template |
 
 `*:write` implies the matching `*:read`. Scopes alone do **not** grant row access or `can_create`.
 
-### Layer 2 — User behind the PAT
+### User behind the PAT
 
-The PAT impersonates its owner. Entity permissions, record policies, field denials, form/view assignments, document capabilities, and manual-workflow trigger roles still apply — same as the UI.
-
-Example: PAT has `records:write` but the user has no `can_create` on the entity → **Create fails**.
+The PAT impersonates its owner (entity permissions, record policies, field denials, form/view assignments, document capabilities, manual-workflow trigger ACL) — same as the UI.
 
 | Setup | PAT owner | Scopes |
 |-------|-----------|--------|
-| Full guided UX (all pickers, generate, run status, List records) | `system_admin` | `admin:read`, `admin:write`, `records:read`, `records:write` |
-| Narrow sync via assigned views/forms | Service user with that ACL | `records:read` / `records:write` only; prefer **List view**; paste ids if you skip admin pickers |
+| Full guided UX | `system_admin` | `admin:read`, `admin:write`, `records:read`, `records:write` |
+| Narrow sync | Service user with entity ACL + assigned views/forms | `records:read` / `records:write` only |
 
-## Repository layout
+## Compatibility
 
-```text
-credentials/          Cervio API credential + icons
-nodes/Cervio/         Node implementation, helpers, icons, unit tests
-  __tests__/          Vitest (write-schema → resource mapper)
-examples/             Importable demo workflows (cover screenshots)
-scripts/              build helpers + live smoke (optional)
-.github/workflows/    CI + npm publish (dispatch until Trusted Publishing)
-compose.yaml          Local n8n with this package mounted
-Dockerfile            Optional image that bakes the node into n8n
-types/                Ambient stubs for n8n-workflow (compile without native deps)
-```
-
-Published npm package contents: `dist/` only (`package.json` → `files`).
+| | |
+|--|--|
+| n8n | Community nodes API v1 (`n8nNodesApiVersion: 1`) |
+| Node.js | ≥ 20 (build / smoke) |
+| Cervio | Tenant with `/api/v1` and External API enabled |
 
 ## Development
 
 ```bash
 npm install
-npm run build    # tsc + copy icons
-npm test         # unit tests
-npm run verify   # load compiled node + credential offline
-npm run lint     # tsc --noEmit
+npm run build
+npm test
+npm run verify
+npm run lint
 ```
 
-Conventions, SemVer tags (`vX.Y.Z`), and npm publish: [CONTRIBUTING.md](./CONTRIBUTING.md).
+Conventions, SemVer tags (`vX.Y.Z`), and publish steps: [CONTRIBUTING.md](./CONTRIBUTING.md).
 
-### Live smoke (optional)
-
-Against a real tenant (copy [`.env.example`](./.env.example)):
+Live smoke (optional):
 
 ```bash
 export CERVIO_BASE_URL=https://YOUR_TENANT.cervio.app
 export CERVIO_PAT=cpat_…
-npm run smoke            # create / list view / update
-npm run smoke:extended   # get, upsert, resolve, upload/open, N:M link, workflows
-npm run smoke:relations  # heavier relation/multivalue lab fixtures
+npm run smoke
+npm run smoke:extended
 ```
-
-| Script | Notes |
-|--------|--------|
-| `smoke:extended` | Requires Wave B routes on the tenant. Unlink needs the PAT junction-listing fix on Cervio. Generate skips without a real template id. Start workflow skips without manual-trigger ACL. |
-| `CERVIO_SMOKE_KEEP=1` | Leave created records |
-| `CERVIO_SMOKE_DELETE_ID` | Also soft-delete another disposable id |
 
 ## Known limits
 
-- **List records** without a view is admin-only — partners should use **List view**
+- List records without a view is admin-only — prefer **List view**
 - Nested child create = two Creates (parent, then child with FK)
-- Lookup-only view columns are labels, not UUIDs — use Search relation / Get for ids
+- Generate document needs a mapped template UUID (no public template catalog yet)
 - List view “all pages”: max 10 × 500 rows
 
 ## References
 
 - [Cervio](https://cervio.app)
-- Tenant OpenAPI: `public/openapi/v1.yaml` in the Cervio app repo
 - [n8n community nodes](https://docs.n8n.io/integrations/community-nodes/)
-- [Building community nodes](https://docs.n8n.io/integrations/community-nodes/building-community-nodes/)
+- Tenant OpenAPI: `public/openapi/v1.yaml` in the Cervio app repo
+
+## License
+
+[MIT](./LICENSE.md)
