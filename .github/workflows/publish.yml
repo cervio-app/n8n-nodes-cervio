@@ -1,4 +1,5 @@
-# Publishes @cervio/n8n-nodes-cervio to npm via Trusted Publishing (OIDC).
+# Publishes @cervio/n8n-nodes-cervio to npm via Trusted Publishing (OIDC),
+# then creates a GitHub Release for the tag.
 #
 # Tag convention: vX.Y.Z must match package.json "version".
 #
@@ -10,10 +11,11 @@
 #
 # Requires npm CLI ≥ 11.5.1 for OIDC (see https://docs.npmjs.com/trusted-publishers).
 #
+# Provenance: enabled (requires public GitHub source repo + OIDC).
+#
 # Release:
 #   npm version patch|minor|major
 #   git push origin main --follow-tags
-#   gh release create vX.Y.Z --generate-notes
 
 name: Publish
 
@@ -30,7 +32,7 @@ on:
 
 permissions:
   id-token: write # required for OIDC Trusted Publishing
-  contents: read
+  contents: write # create GitHub Release
 
 jobs:
   publish:
@@ -91,6 +93,7 @@ jobs:
             fi
           fi
           echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          echo "TAG=v${VERSION}" >> "$GITHUB_ENV"
           echo "Publishing @cervio/n8n-nodes-cervio@${VERSION}"
 
       - name: Skip if version already on npm
@@ -120,8 +123,32 @@ jobs:
             fi
             unset NODE_AUTH_TOKEN || true
           fi
-          # Provenance attestations require a *public* GitHub source repo.
-          # This package repo is private → disable provenance; OIDC publish still works.
-          NPM_CONFIG_PROVENANCE=false npm publish --access public
+          npm publish --access public --provenance
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_CONFIG_PROVENANCE: 'true'
+
+      - name: Ensure GitHub Release
+        if: startsWith(github.ref, 'refs/tags/') || inputs.tag != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          TAG="${TAG:-v${VERSION}}"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "GitHub Release $TAG already exists"
+          else
+            NOTES=""
+            if [ -f CHANGELOG.md ]; then
+              NOTES=$(awk -v ver="## [${VERSION}]" '
+                $0 ~ ver {grab=1; next}
+                grab && /^## \[/{exit}
+                grab {print}
+              ' CHANGELOG.md | sed '/./,$!d')
+            fi
+            if [ -n "$NOTES" ]; then
+              gh release create "$TAG" --title "$TAG" --notes "$NOTES"
+            else
+              gh release create "$TAG" --title "$TAG" --generate-notes
+            fi
+          fi

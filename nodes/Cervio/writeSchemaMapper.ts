@@ -215,6 +215,13 @@ export function pickCompiledFieldValues(
 	return out;
 }
 
+/** Same as pickCompiledFieldValues, typed for n8n IDataObject consumers. */
+export function pickCompiledFieldData(
+	raw: Record<string, unknown> | null | undefined,
+): import('n8n-workflow').IDataObject {
+	return pickCompiledFieldValues(raw) as import('n8n-workflow').IDataObject;
+}
+
 export function formLabelWithRole(form: {
 	name: string;
 	label: string;
@@ -222,8 +229,8 @@ export function formLabelWithRole(form: {
 	is_default_view?: boolean;
 }): string {
 	const roles: string[] = [];
-	if (form.is_default_view) roles.push('modifica');
-	if (form.is_default) roles.push('creazione');
+	if (form.is_default_view) roles.push('edit');
+	if (form.is_default) roles.push('create');
 	const suffix = roles.length > 0 ? ` (${roles.join(', ')})` : '';
 	return `${form.label || form.name}${suffix}`;
 }

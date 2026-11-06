@@ -1,6 +1,6 @@
 {
   "name": "@cervio/n8n-nodes-cervio",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "n8n community node for Cervio — entity records, documents, N:M links, and workflows via REST /api/v1",
   "license": "MIT",
   "homepage": "https://github.com/cervio-app/n8n-nodes-cervio#readme",
@@ -25,6 +25,9 @@
   "publishConfig": {
     "access": "public"
   },
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "build": "tsc && node scripts/copy-icons.mjs",
     "build:watch": "tsc --watch",
@@ -34,8 +37,10 @@
     "smoke:relations": "node scripts/smoke-relations.mjs",
     "smoke:extended": "node scripts/smoke-extended.mjs",
     "verify": "node scripts/verify-node-load.mjs",
-    "lint": "tsc --noEmit",
-    "prepublishOnly": "npm run build && npm test && npm run verify"
+    "lint": "npm run lint:tsc && npm run lint:eslint",
+    "lint:tsc": "tsc --noEmit",
+    "lint:eslint": "eslint .",
+    "prepublishOnly": "npm run lint && npm run build && npm test && npm run verify"
   },
   "files": [
     "dist",
@@ -51,7 +56,12 @@
     ]
   },
   "devDependencies": {
+    "@eslint/json": "^2.1.1",
+    "@n8n/eslint-plugin-community-nodes": "^0.39.0",
+    "eslint": "^9.29.0",
+    "n8n-workflow": "^2.16.0",
     "typescript": "5.9.3",
+    "typescript-eslint": "^8.70.0",
     "vitest": "^3.2.4"
   },
   "peerDependencies": {

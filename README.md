@@ -56,13 +56,17 @@ mkdir -p ~/.n8n/custom && cd ~/.n8n/custom
 npm link @cervio/n8n-nodes-cervio
 ```
 
-### Docker Compose (local smoke)
+### Docker Compose (local n8n)
+
+Uses [`compose.yaml`](./compose.yaml) to run n8n with this package linked:
 
 ```bash
 npm run build
-docker compose up
+docker compose -f compose.yaml up
 # → http://localhost:5678
 ```
+
+Live API smoke scripts (`npm run smoke*`) are separate — see [CONTRIBUTING.md](./CONTRIBUTING.md).
 
 ## Credentials
 
@@ -77,19 +81,21 @@ All operations use this credential.
 
 ## Operations
 
-| Group | Operation | Description |
-|-------|-----------|-------------|
-| **Records** | Create / Update / Get / Delete | CRUD through an assigned form mask |
-| | Upsert | Natural-key create-or-update (`match_field`) |
+Pick a **Resource**, then an **Operation** (operation values are stable across releases).
+
+| Resource | Operation | Description |
+|----------|-----------|-------------|
+| **Record** | Create / Update / Get / Delete | CRUD through an assigned form mask |
+| | Create or Update (upsert) | Natural-key create-or-update (`match_field`) |
 | | Validate draft | Dry-run formulas / required fields |
 | | List view | Read via an assigned list view (cursor pages) |
-| | List records | Admin entity list with `filter[field]=eq.value` |
-| **Relations** | Search relation | Browse/search relation candidates (`q`, limit ≤ 100) |
-| | Resolve relation | Match scalar keys → record UUIDs |
+| | List | Admin entity list with `filter[field]=eq.value` |
+| **Relation** | Search | Browse/search relation candidates (`q`, limit ≤ 100) |
+| | Resolve Key | Match scalar keys → record UUIDs |
 | | Link / Unlink | N:M through-field links |
-| **Documents** | List / Upload / Open | Metadata, multipart upload, signed URL |
-| | Generate | Render a mapped document template (admin) |
-| **Workflows** | Start / Get run | Manual start + admin run status |
+| **Document** | List / Upload / Open | Metadata, multipart upload, signed URL |
+| | Generate from Template | Render a mapped document template (admin) |
+| **Workflow** | Start / Get Run Status | Manual start + admin run status |
 
 **Notes**
 

@@ -503,7 +503,7 @@ export function flattenRecordRow(record: unknown): IDataObject {
 	if (id != null) out.id = id;
 	for (const [k, v] of Object.entries(rest)) {
 		if (k !== 'entity_id' && k !== 'created_at' && k !== 'updated_at') {
-			out[k] = v;
+			out[k] = v as IDataObject[string];
 		}
 	}
 	return out;

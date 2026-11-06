@@ -171,7 +171,7 @@ describe('writeSchemaToMapperFields dedup', () => {
 });
 
 describe('formLabelWithRole', () => {
-	it('annotates creazione and modifica', () => {
+	it('annotates create and edit roles in English', () => {
 		expect(
 			formLabelWithRole({
 				name: 'default',
@@ -179,9 +179,9 @@ describe('formLabelWithRole', () => {
 				is_default: true,
 				is_default_view: true,
 			}),
-		).toBe('TESTMCP (modifica, creazione)');
+		).toBe('TESTMCP (edit, create)');
 		expect(
-			formLabelWithRole({ name: 'other', label: 'Altra', is_default: true }),
-		).toBe('Altra (creazione)');
+			formLabelWithRole({ name: 'other', label: 'Other', is_default: true }),
+		).toBe('Other (create)');
 	});
 });

@@ -58,10 +58,17 @@ const ALL_OPERATIONS = [
 	'getWorkflowRun',
 ];
 
-const ops = node.description.properties.find((p) => p.name === 'operation');
-const values = (ops?.options || []).map((o) => o.value);
+const opProps = node.description.properties.filter((p) => p.name === 'operation');
+const values = opProps.flatMap((p) => (p.options || []).map((o) => o.value));
 for (const need of ALL_OPERATIONS) {
 	if (!values.includes(need)) throw new Error(`missing operation ${need}`);
+}
+const resource = node.description.properties.find((p) => p.name === 'resource');
+if (!resource?.options?.some((o) => o.value === 'record')) {
+	throw new Error('missing resource parameter');
+}
+if (opProps.length < 4) {
+	throw new Error(`expected 4 operation groups by resource, got ${opProps.length}`);
 }
 
 const mappers = node.description.properties.filter((p) => p.type === 'resourceMapper');

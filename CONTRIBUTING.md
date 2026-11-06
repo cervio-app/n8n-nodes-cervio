@@ -10,13 +10,29 @@ npm run verify
 npm run lint
 ```
 
-Optional live smoke (copy `.env.example`):
+`npm run lint` runs TypeScript (`tsc --noEmit`) and ESLint (`@n8n/eslint-plugin-community-nodes`).
+
+`.npmrc` sets `ignore-scripts=true` so `n8n-workflow` (devDependency for types) does not build native `isolated-vm`. Runtime n8n still provides the real package.
+
+### Live smoke (manual — not in CI)
+
+Smoke scripts hit a real Cervio tenant and need a PAT. They are **not** part of PR CI.
 
 ```bash
+# copy .env.example → export or source
 export CERVIO_BASE_URL=https://YOUR_TENANT.cervio.app
 export CERVIO_PAT=cpat_…
 npm run smoke
 npm run smoke:extended
+npm run smoke:relations
+```
+
+Local n8n against this package via Compose:
+
+```bash
+npm run build
+docker compose -f compose.yaml up
+# → http://localhost:5678
 ```
 
 ## Commits
@@ -32,6 +48,7 @@ Examples: `feat: add upsert record operation`, `fix: coerce relation id on updat
 3. CI must pass (`lint`, `build`, `test`, `verify`)
 4. Update `README.md` when operations change
 5. Keep unit tests next to the node under `nodes/Cervio/__tests__/`
+6. Update `CHANGELOG.md` `[Unreleased]` for user-facing changes
 
 ## Versioning and tags
 
@@ -39,24 +56,26 @@ Keep these three equal for every release:
 
 | Source | Example |
 |--------|---------|
-| `package.json` `version` | `0.2.1` |
-| Annotated git tag | `v0.2.1` |
-| npm `@cervio/n8n-nodes-cervio` | `0.2.1` |
+| `package.json` `version` | `0.2.2` |
+| Annotated git tag | `v0.2.2` |
+| npm `@cervio/n8n-nodes-cervio` | `0.2.2` |
 
 - Never move or delete a published `v*` tag
-- Pushing a `v*.*.*` tag runs [.github/workflows/publish.yml](./.github/workflows/publish.yml) (npm publish with provenance). If that version is already on npm, the job skips publish.
+- Pushing a `v*.*.*` tag runs [.github/workflows/publish.yml](./.github/workflows/publish.yml) (npm Trusted Publishing via OIDC + provenance, then GitHub Release). If that version is already on npm, the job skips publish and still ensures a GitHub Release exists.
+- **Provenance:** enabled (`npm publish --provenance`). The GitHub source repository must stay **public**.
 
 ### Cut a release
 
 ```bash
 # from a clean main, after features are merged
+# 1. Move CHANGELOG [Unreleased] → new version section
 npm version patch   # or minor / major — bumps package.json, commits, tags vX.Y.Z
 git push origin main --follow-tags
-gh release create "v$(node -p "require('./package.json').version")" --generate-notes
+# publish.yml publishes to npm and creates the GitHub Release
 ```
 
 npm Trusted Publishing (preferred): package settings → Trusted Publishers → GitHub Actions  
-`owner: cervio-app` · `repo: n8n-nodes-cervio` · `workflow: publish.yml`  
+`owner: cervio-app` · `repo: n8n-nodes-cervio` · `workflow: publish.yml` · allow `npm publish`  
 Fallback: repo secret `NPM_TOKEN`.
 
 Published package: [`@cervio/n8n-nodes-cervio`](https://www.npmjs.com/package/@cervio/n8n-nodes-cervio).
