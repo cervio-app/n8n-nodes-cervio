@@ -278,11 +278,13 @@ Live smoke (set your tenant; copy [`.env.example`](./.env.example)):
 export CERVIO_BASE_URL=https://YOUR_TENANT.cervio.app
 export CERVIO_PAT=cpat_…
 npm run smoke
-npm run smoke:extended   # get, validate-draft, list, upsert, resolve, delete cleanup
+npm run smoke:extended   # upsert/resolve, upload/open, N:M link, workflows (skips generate/start if no fixture/ACL)
 npm run smoke:relations
 ```
 
-Optional: `CERVIO_SMOKE_KEEP=1` leaves the smoke record; `CERVIO_SMOKE_DELETE_ID` also DELETEs another disposable id.
+`smoke:extended` also exercises Lab Rel Corso↔Argomento **link**; **unlink** needs the cervio-1 impersonation listing fix deployed. **generateDocument** needs a mapped template id; **startWorkflow** needs manual-trigger ACL for the PAT user.
+
+Optional: `CERVIO_SMOKE_KEEP=1` leaves smoke records; `CERVIO_SMOKE_DELETE_ID` also DELETEs another disposable id.
 
 ## Known limits
 
