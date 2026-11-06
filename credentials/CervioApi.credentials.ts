@@ -16,18 +16,18 @@ export class CervioApi implements ICredentialType {
 		dark: 'file:cervio.mono.dark.svg',
 	};
 
-	documentationUrl = 'https://dev.cervio.app/admin/api';
+	documentationUrl = 'https://github.com/cervio-app/n8n-nodes-cervio#readme';
 
 	properties: INodeProperties[] = [
 		{
 			displayName: 'Base URL',
 			name: 'baseUrl',
 			type: 'string',
-			default: 'https://dev.cervio.app',
+			default: '',
 			placeholder: 'https://tenant.cervio.app',
 			required: true,
 			description:
-				'URL dell’istanza Cervio, senza slash finale. Ogni tenant ha il proprio dominio.',
+				'URL dell’istanza Cervio del tenant, senza slash finale (es. https://acme.cervio.app). Va impostata per ogni credenziale.',
 		},
 		{
 			displayName: 'Personal Access Token',
