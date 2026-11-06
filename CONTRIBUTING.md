@@ -16,15 +16,14 @@ npm run lint
 
 ### Live smoke (manual — not in CI)
 
-Smoke scripts hit a real Cervio tenant and need a PAT. They are **not** part of PR CI.
+Smoke scripts hit a real Cervio tenant and need a PAT plus **your** entity UUIDs. They are **not** part of PR CI. The repo ships no lab/tenant defaults — copy [`.env.example`](./.env.example) and fill every required `CERVIO_SMOKE_*` id.
 
 ```bash
-# copy .env.example → export or source
-export CERVIO_BASE_URL=https://YOUR_TENANT.cervio.app
-export CERVIO_PAT=cpat_…
+cp .env.example .env   # gitignored; export or source before running
+# CERVIO_BASE_URL, CERVIO_PAT, CERVIO_SMOKE_ENTITY_ID required for smoke / smoke:extended
 npm run smoke
 npm run smoke:extended
-npm run smoke:relations
+npm run smoke:relations   # needs the full CERVIO_SMOKE_* entity map in .env.example
 ```
 
 Local n8n against this package via Compose:

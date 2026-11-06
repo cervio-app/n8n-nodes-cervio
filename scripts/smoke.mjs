@@ -1,28 +1,26 @@
 #!/usr/bin/env node
 /**
  * Smoke against a live Cervio tenant.
- * Requires CERVIO_BASE_URL + CERVIO_PAT (system_admin with admin:read + records:read + records:write).
+ * Requires CERVIO_BASE_URL + CERVIO_PAT + CERVIO_SMOKE_ENTITY_ID
+ * (system_admin with admin:read + records:read + records:write).
  *
- * Flow: me → entities → TESTMCP forms/views → create → list view (paginated) →
- * update stato → verify merge.
+ * Flow: me → entities → forms/views on smoke entity → create → list view
+ * (paginated) → update → verify merge.
+ *
+ * Smoke entity must have form/view `default` and a `stato` option field.
  */
 
-const BASE_RAW = (process.env.CERVIO_BASE_URL || '').trim();
-if (!BASE_RAW) {
-	console.error('Set CERVIO_BASE_URL=https://YOUR_TENANT.cervio.app');
-	process.exit(1);
-}
-const BASE = BASE_RAW.replace(/\/+$/, '');
-const PAT = process.env.CERVIO_PAT || '';
-const ENTITY_ID =
-	process.env.CERVIO_SMOKE_ENTITY_ID ||
-	'be2f3bf2-effd-4d71-a4b0-dbbb69584224'; // TESTMCP on dev
+import { requireEnv } from './smoke-env.mjs';
+
+const BASE = requireEnv('CERVIO_BASE_URL').replace(/\/+$/, '');
+const PAT = requireEnv('CERVIO_PAT');
+const ENTITY_ID = requireEnv('CERVIO_SMOKE_ENTITY_ID');
 /** Mirrors nodes/Cervio/GenericFunctions.ts MAX_PAGES */
 const MAX_PAGES = 10;
 
 if (!PAT.startsWith('cpat_')) {
 	console.error(
-		'Set CERVIO_PAT=cpat_… (system_admin with admin:read + records:*).',
+		'CERVIO_PAT must be a Personal Access Token (cpat_…; system_admin with admin:read + records:*).',
 	);
 	process.exit(1);
 }
@@ -112,7 +110,7 @@ async function main() {
 	const entities = await api('GET', '/api/v1/entities');
 	assert(
 		(entities.entities || []).some((e) => e.id === ENTITY_ID),
-		'TESTMCP entity not visible to this token',
+		`smoke entity ${ENTITY_ID} not visible to this token`,
 	);
 
 	const forms = await api('GET', `/api/v1/admin/entities/${ENTITY_ID}/forms`);

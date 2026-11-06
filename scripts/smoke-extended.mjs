@@ -1,40 +1,29 @@
 #!/usr/bin/env node
 /**
- * Extended REST smoke for Wave A/B ops used by the n8n node.
- * Requires CERVIO_BASE_URL + CERVIO_PAT (system_admin + records:* + admin:read).
+ * Extended REST smoke for ops used by the n8n node.
+ * Requires CERVIO_BASE_URL + CERVIO_PAT + CERVIO_SMOKE_ENTITY_ID
+ * (system_admin + records:* + admin:read).
  *
  * Soft-deletes records it creates unless CERVIO_SMOKE_KEEP=1.
  *
- * Optional env:
- *   CERVIO_SMOKE_ENTITY_ID   — TESTMCP-like entity (default: lab TESTMCP)
- *   CERVIO_SMOKE_CORSO_ID    — Lab Rel Corso (N:M through)
- *   CERVIO_SMOKE_ARGOMENTO_ID
- *   CERVIO_SMOKE_WORKFLOW_ID — manual workflow on the smoke entity
- *   CERVIO_SMOKE_DELETE_ID   — also DELETE this disposable record
+ * Optional env (sections SKIP when unset):
+ *   CERVIO_SMOKE_CORSO_ID / CERVIO_SMOKE_ARGOMENTO_ID / CERVIO_SMOKE_THROUGH_FIELD — N:M link/unlink
+ *   CERVIO_SMOKE_WORKFLOW_ID — manual workflow start + run status
+ *   CERVIO_SMOKE_DELETE_ID — also DELETE this disposable record
  */
-const BASE_RAW = (process.env.CERVIO_BASE_URL || '').trim();
-if (!BASE_RAW) {
-	console.error('Set CERVIO_BASE_URL=https://YOUR_TENANT.cervio.app');
-	process.exit(1);
-}
-const BASE = BASE_RAW.replace(/\/+$/, '');
-const PAT = process.env.CERVIO_PAT || '';
 
-const ENTITY_ID =
-	process.env.CERVIO_SMOKE_ENTITY_ID ||
-	'be2f3bf2-effd-4d71-a4b0-dbbb69584224'; // TESTMCP on lab
-const CORSO_ID =
-	process.env.CERVIO_SMOKE_CORSO_ID || 'cd6949af-f4bc-44ec-b5fc-9a85aee7f2f4';
-const ARGOMENTO_ID =
-	process.env.CERVIO_SMOKE_ARGOMENTO_ID ||
-	'ee55b514-278b-4437-8aae-c10354ed308c';
-const WORKFLOW_ID =
-	process.env.CERVIO_SMOKE_WORKFLOW_ID ||
-	'327765a7-df4d-406c-abc9-10414e24525a'; // Approvazione TESTMCP
-const THROUGH_FIELD = process.env.CERVIO_SMOKE_THROUGH_FIELD || 'argomenti_tag';
+import { optionalEnv, requireEnv } from './smoke-env.mjs';
+
+const BASE = requireEnv('CERVIO_BASE_URL').replace(/\/+$/, '');
+const PAT = requireEnv('CERVIO_PAT');
+const ENTITY_ID = requireEnv('CERVIO_SMOKE_ENTITY_ID');
+const CORSO_ID = optionalEnv('CERVIO_SMOKE_CORSO_ID');
+const ARGOMENTO_ID = optionalEnv('CERVIO_SMOKE_ARGOMENTO_ID');
+const WORKFLOW_ID = optionalEnv('CERVIO_SMOKE_WORKFLOW_ID');
+const THROUGH_FIELD = optionalEnv('CERVIO_SMOKE_THROUGH_FIELD');
 
 if (!PAT.startsWith('cpat_')) {
-	console.log('SKIP smoke-extended: set CERVIO_PAT=cpat_…');
+	console.log('SKIP smoke-extended: CERVIO_PAT must start with cpat_');
 	process.exit(0);
 }
 
@@ -211,73 +200,90 @@ async function main() {
 			);
 		}
 
-		// --- N:M link / unlink (Lab Rel Corso ↔ Argomento) ---
-		const corso = await api('POST', `/api/v1/entities/${CORSO_ID}/records`, {
-			form_name: 'default',
-			data: { nome: `n8n-link-corso-${stamp}` },
-		});
-		assert(corso.json.id, 'corso id');
-		cleanup.push([CORSO_ID, corso.json.id]);
-		const argomento = await api('POST', `/api/v1/entities/${ARGOMENTO_ID}/records`, {
-			form_name: 'default',
-			data: { nome: `n8n-link-arg-${stamp}` },
-		});
-		assert(argomento.json.id, 'argomento id');
-		cleanup.push([ARGOMENTO_ID, argomento.json.id]);
+		// --- N:M link / unlink (optional) ---
+		if (CORSO_ID && ARGOMENTO_ID && THROUGH_FIELD) {
+			const corso = await api('POST', `/api/v1/entities/${CORSO_ID}/records`, {
+				form_name: 'default',
+				data: { nome: `n8n-link-corso-${stamp}` },
+			});
+			assert(corso.json.id, 'near entity create id');
+			cleanup.push([CORSO_ID, corso.json.id]);
+			const argomento = await api(
+				'POST',
+				`/api/v1/entities/${ARGOMENTO_ID}/records`,
+				{
+					form_name: 'default',
+					data: { nome: `n8n-link-arg-${stamp}` },
+				},
+			);
+			assert(argomento.json.id, 'far entity create id');
+			cleanup.push([ARGOMENTO_ID, argomento.json.id]);
 
-		const linked = await api(
-			'POST',
-			`/api/v1/entities/${CORSO_ID}/forms/default/fields/${encodeURIComponent(THROUGH_FIELD)}/links`,
-			{
-				from_record_id: corso.json.id,
-				far_record_id: argomento.json.id,
-			},
-		);
-		assert(linked.json.junction_record_id, 'link junction_record_id');
-		console.log('linkRecords:', linked.json.junction_record_id);
+			const linked = await api(
+				'POST',
+				`/api/v1/entities/${CORSO_ID}/forms/default/fields/${encodeURIComponent(THROUGH_FIELD)}/links`,
+				{
+					from_record_id: corso.json.id,
+					far_record_id: argomento.json.id,
+				},
+			);
+			assert(linked.json.junction_record_id, 'link junction_record_id');
+			console.log('linkRecords:', linked.json.junction_record_id);
 
-		const unlinked = await api(
-			'DELETE',
-			`/api/v1/entities/${CORSO_ID}/forms/default/fields/${encodeURIComponent(THROUGH_FIELD)}/links`,
-			{
-				from_record_id: corso.json.id,
-				far_record_id: argomento.json.id,
-			},
-		);
-		if (unlinked.json.deleted >= 1) {
-			console.log('unlinkRecords: deleted', unlinked.json.deleted);
+			const unlinked = await api(
+				'DELETE',
+				`/api/v1/entities/${CORSO_ID}/forms/default/fields/${encodeURIComponent(THROUGH_FIELD)}/links`,
+				{
+					from_record_id: corso.json.id,
+					far_record_id: argomento.json.id,
+				},
+			);
+			if (unlinked.json.deleted >= 1) {
+				console.log('unlinkRecords: deleted', unlinked.json.deleted);
+			} else {
+				console.log(
+					'WARN unlinkRecords: deleted=0 under PAT — check junction ACL / listJunctionRowsForNear on the tenant.',
+				);
+			}
 		} else {
 			console.log(
-				'WARN unlinkRecords: deleted=0 under PAT — needs cervio-1 fix for impersonated junction listing (listJunctionRowsForNear). Redeploy after that commit.',
+				'link/unlink: SKIP (set CERVIO_SMOKE_CORSO_ID, CERVIO_SMOKE_ARGOMENTO_ID, CERVIO_SMOKE_THROUGH_FIELD)',
 			);
 		}
 
-		// --- workflow start + status ---
+		// --- workflow start + status (optional) ---
 		const workflows = await api('GET', '/api/v1/admin/workflows');
 		assert(Array.isArray(workflows.json.workflows), 'admin workflows list');
 		console.log('list workflows: ok', workflows.json.workflows.length);
 
-		const started = await api(
-			'POST',
-			`/api/v1/workflows/${WORKFLOW_ID}/runs`,
-			{ entity_data_id: recordId },
-			{ allowStatuses: [403, 404] },
-		);
-		if (started.status === 202 && started.json.invocation_id) {
-			console.log('startWorkflow:', started.json.invocation_id);
-			const status = await api(
-				'GET',
-				`/api/v1/admin/workflows/${WORKFLOW_ID}/runs/${started.json.invocation_id}`,
+		if (WORKFLOW_ID) {
+			const started = await api(
+				'POST',
+				`/api/v1/workflows/${WORKFLOW_ID}/runs`,
+				{ entity_data_id: recordId },
+				{ allowStatuses: [403, 404] },
 			);
-			assert(status.json.run || status.json.status || status.json, 'run status payload');
-			console.log(
-				'getWorkflowRun:',
-				status.json.run?.status || status.json.status || 'payload ok',
-			);
+			if (started.status === 202 && started.json.invocation_id) {
+				console.log('startWorkflow:', started.json.invocation_id);
+				const status = await api(
+					'GET',
+					`/api/v1/admin/workflows/${WORKFLOW_ID}/runs/${started.json.invocation_id}`,
+				);
+				assert(
+					status.json.run || status.json.status || status.json,
+					'run status payload',
+				);
+				console.log(
+					'getWorkflowRun:',
+					status.json.run?.status || status.json.status || 'payload ok',
+				);
+			} else {
+				console.log(
+					`startWorkflow: SKIP (${started.status}) — PAT user lacks manual-trigger ACL on workflow ${WORKFLOW_ID}`,
+				);
+			}
 		} else {
-			console.log(
-				`startWorkflow: SKIP (${started.status}) — PAT user lacks manual-trigger ACL on workflow ${WORKFLOW_ID}`,
-			);
+			console.log('startWorkflow: SKIP (set CERVIO_SMOKE_WORKFLOW_ID)');
 		}
 
 		const extraDelete = process.env.CERVIO_SMOKE_DELETE_ID?.trim();

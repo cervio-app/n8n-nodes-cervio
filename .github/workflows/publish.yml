@@ -14,8 +14,8 @@
 # Provenance: enabled (requires public GitHub source repo + OIDC).
 #
 # Release:
-#   npm version patch|minor|major
-#   git push origin main --follow-tags
+#   bump package.json + CHANGELOG, commit, then:
+#   git tag -a vX.Y.Z -m "vX.Y.Z" && git push origin main --follow-tags
 
 name: Publish
 
@@ -23,12 +23,6 @@ on:
   push:
     tags:
       - 'v*.*.*'
-  workflow_dispatch:
-    inputs:
-      tag:
-        description: 'Git tag to check out and publish (e.g. v0.2.2). Empty = current default branch HEAD.'
-        required: false
-        default: ''
 
 permissions:
   id-token: write # required for OIDC Trusted Publishing
@@ -40,8 +34,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-        with:
-          ref: ${{ inputs.tag != '' && inputs.tag || github.ref }}
 
       - name: Set up Node.js
         uses: actions/setup-node@v7
@@ -64,8 +56,8 @@ jobs:
       - name: Lint
         run: npm run lint
 
-      - name: Test
-        run: npm test
+      - name: Unit tests with coverage gates
+        run: npm run test:coverage
 
       - name: Build
         run: npm run build
@@ -77,23 +69,14 @@ jobs:
         run: |
           set -euo pipefail
           VERSION="$(node -p "require('./package.json').version")"
-          REF="${GITHUB_REF_NAME:-}"
-          if [[ "${GITHUB_REF:-}" == refs/tags/* ]]; then
-            TAG="$REF"
-          elif [ -n "${{ inputs.tag }}" ]; then
-            TAG="${{ inputs.tag }}"
-          else
-            TAG=""
-          fi
-          if [ -n "$TAG" ]; then
-            EXPECTED="v${VERSION}"
-            if [ "$TAG" != "$EXPECTED" ]; then
-              echo "Tag $TAG does not match package.json version v${VERSION}"
-              exit 1
-            fi
+          TAG="${GITHUB_REF_NAME}"
+          EXPECTED="v${VERSION}"
+          if [ "$TAG" != "$EXPECTED" ]; then
+            echo "Tag $TAG does not match package.json version ${EXPECTED}"
+            exit 1
           fi
           echo "VERSION=$VERSION" >> "$GITHUB_ENV"
-          echo "TAG=v${VERSION}" >> "$GITHUB_ENV"
+          echo "TAG=$TAG" >> "$GITHUB_ENV"
           echo "Publishing @cervio/n8n-nodes-cervio@${VERSION}"
 
       - name: Skip if version already on npm
@@ -118,8 +101,6 @@ jobs:
           else
             if [ -n "${NPM_CONFIG_USERCONFIG:-}" ] && [ -f "${NPM_CONFIG_USERCONFIG}" ]; then
               sed -i '/_authToken/d' "${NPM_CONFIG_USERCONFIG}"
-              echo "npmrc after strip:"
-              cat "${NPM_CONFIG_USERCONFIG}" || true
             fi
             unset NODE_AUTH_TOKEN || true
           fi
@@ -129,12 +110,10 @@ jobs:
           NPM_CONFIG_PROVENANCE: 'true'
 
       - name: Ensure GitHub Release
-        if: startsWith(github.ref, 'refs/tags/') || inputs.tag != ''
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          TAG="${TAG:-v${VERSION}}"
           if gh release view "$TAG" >/dev/null 2>&1; then
             echo "GitHub Release $TAG already exists"
           else

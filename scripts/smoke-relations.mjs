@@ -1,37 +1,49 @@
 #!/usr/bin/env node
 /**
  * Relation / multivalue stress against a live Cervio tenant.
- * Requires CERVIO_PAT (system_admin with admin:read + records:read + records:write).
+ * Requires CERVIO_BASE_URL + CERVIO_PAT + entity UUID env vars (see .env.example).
+ * (system_admin with admin:read + records:read + records:write).
  *
- * Targets (dev defaults):
- *   Lab Rel Corso / Sede / Docente / Lezione / Argomento
- *   Man Rel Ordine / Cliente / Riga
- *   Engineering Projects (multi_select parent_fk)
+ * Covers parent_fk / 1:N / N:M / multi_select shapes you configure via env.
+ * Optional CERVIO_SMOKE_ENTITY_ID enables the options=both round-trip probe.
  *
  * Prints LIMITS / GAPS assessment at the end (exit 0 if baseline N:1/1:1/1:N ok).
  */
 
-const BASE_RAW = (process.env.CERVIO_BASE_URL || '').trim();
-if (!BASE_RAW) {
-	console.error('Set CERVIO_BASE_URL=https://YOUR_TENANT.cervio.app');
-	process.exit(1);
-}
-const BASE = BASE_RAW.replace(/\/+$/, '');
-const PAT = process.env.CERVIO_PAT || '';
+import { optionalEnv, requireEnv, requireEnvs } from './smoke-env.mjs';
+
+const BASE = requireEnv('CERVIO_BASE_URL').replace(/\/+$/, '');
+const PAT = requireEnv('CERVIO_PAT');
+
+const envIds = requireEnvs([
+	'CERVIO_SMOKE_CORSO_ID',
+	'CERVIO_SMOKE_SEDE_ID',
+	'CERVIO_SMOKE_DOCENTE_ID',
+	'CERVIO_SMOKE_LEZIONE_ID',
+	'CERVIO_SMOKE_ARGOMENTO_ID',
+	'CERVIO_SMOKE_ORDINE_ID',
+	'CERVIO_SMOKE_CLIENTE_ID',
+	'CERVIO_SMOKE_RIGA_ID',
+	'CERVIO_SMOKE_ENG_PROJECT_ID',
+	'CERVIO_SMOKE_BUSINESS_UNIT_ID',
+	'CERVIO_SMOKE_CONTRIBUTOR_ID',
+]);
 
 const IDS = {
-	corso: 'cd6949af-f4bc-44ec-b5fc-9a85aee7f2f4',
-	sede: 'f267f42e-6d09-4b4a-a5c4-64333835a63c',
-	docente: '3d2ad017-445f-4777-881f-48787e949a0e',
-	lezione: 'dae40a29-10ea-40ff-913b-eef75242657d',
-	argomento: 'ee55b514-278b-4437-8aae-c10354ed308c',
-	ordine: '0b0be4a0-56e0-43e0-a55c-58be68e9e981',
-	cliente: 'd3fc5ea8-84f0-4522-a9df-421d0b651dca',
-	riga: '79d47bd8-3cd7-43e7-ae4b-da251fb35c7d',
-	engProject: 'be28d780-1987-4208-a201-84fa966ec856',
-	businessUnit: 'aa7e4d20-bf0f-4aee-a64e-6b82575eefa1',
-	contributor: 'c42876f3-4931-45fe-8d61-7c54846f3c18',
+	corso: envIds.CERVIO_SMOKE_CORSO_ID,
+	sede: envIds.CERVIO_SMOKE_SEDE_ID,
+	docente: envIds.CERVIO_SMOKE_DOCENTE_ID,
+	lezione: envIds.CERVIO_SMOKE_LEZIONE_ID,
+	argomento: envIds.CERVIO_SMOKE_ARGOMENTO_ID,
+	ordine: envIds.CERVIO_SMOKE_ORDINE_ID,
+	cliente: envIds.CERVIO_SMOKE_CLIENTE_ID,
+	riga: envIds.CERVIO_SMOKE_RIGA_ID,
+	engProject: envIds.CERVIO_SMOKE_ENG_PROJECT_ID,
+	businessUnit: envIds.CERVIO_SMOKE_BUSINESS_UNIT_ID,
+	contributor: envIds.CERVIO_SMOKE_CONTRIBUTOR_ID,
 };
+
+const OPTIONS_PROBE_ENTITY = optionalEnv('CERVIO_SMOKE_ENTITY_ID');
 
 const SEED_PREFIX = 'n8n-stress-sede-';
 const DROPDOWN_PROBE_LIMIT = 50;
@@ -40,7 +52,7 @@ const SKIP_SEED50 = process.env.CERVIO_SKIP_SEED50 === '1';
 
 if (!PAT.startsWith('cpat_')) {
 	console.error(
-		'Set CERVIO_PAT=cpat_… (system_admin with admin:read + records:*).',
+		'CERVIO_PAT must be a Personal Access Token (cpat_…; system_admin with admin:read + records:*).',
 	);
 	process.exit(1);
 }
@@ -170,7 +182,7 @@ async function main() {
 			prio: 'P1',
 			id: 'dedup-sede_id',
 			title: 'write-schema repeats sede_id (far-edit demo) → duplicate mapper columns',
-			detail: `Lab Rel Corso default has sede_id ×${sedeDup}. writeSchemaToMapperFields does not dedupe by name.`,
+			detail: `Near-entity write-schema has sede_id ×${sedeDup}. writeSchemaToMapperFields does not dedupe by name.`,
 		});
 	}
 	for (const f of throughFields) {
@@ -243,7 +255,7 @@ async function main() {
 	assert(lezione.id, 'lezione create no id');
 	log('create-lezione', lezione.id);
 	findings.ok.push(
-		'1:N: create on child Lab Rel Lezione with corso_id OK (parent lessons window is not a writable array)',
+		'1:N: create on child lezione with corso_id OK (parent lessons window is not a writable array)',
 	);
 	findings.missing.push({
 		prio: 'P1',
@@ -328,50 +340,57 @@ async function main() {
 		id: 'view-columns-only',
 		title: 'List view exposes only view columns, not every form field',
 		detail:
-			`Lab Rel Corso default shows only through (${corsoKeys.join(', ') || 'empty'}): sede_id/tutor_id absent. Guided Update needs a view with parent_fk or GET record (not in the node).`,
+			`Near-entity default view shows (${corsoKeys.join(', ') || 'empty'}): parent_fk may be absent. Guided Update needs a view with parent_fk or GET record (not in the node).`,
 	});
 
-	// TESTMCP: options=both → {id,label} round-trip trap (entity already used by smoke.mjs)
-	const testmcp = 'be2f3bf2-effd-4d71-a4b0-dbbb69584224';
-	const tmView = await defaultViewId(testmcp);
-	const tmList = await api(
-		'GET',
-		`/api/v1/views/${tmView}/records?limit=1&options=both&relations=both`,
-	);
-	const tmRow = (tmList.records || [])[0];
-	const statoBoth = tmRow?.data?.stato;
-	log('list-testmcp', `stato both=${JSON.stringify(statoBoth)}`);
-	if (statoBoth && typeof statoBoth === 'object' && statoBoth.id) {
-		const badStato = await api(
-			'PATCH',
-			`/api/v1/entities/${testmcp}/records/${tmRow.id}`,
-			{ form_name: 'default', data: { stato: statoBoth } },
-			{ allowFail: true },
+	// Optional: options=both → {id,label} round-trip probe (same entity as smoke.mjs)
+	if (OPTIONS_PROBE_ENTITY) {
+		const tmView = await defaultViewId(OPTIONS_PROBE_ENTITY);
+		const tmList = await api(
+			'GET',
+			`/api/v1/views/${tmView}/records?limit=1&options=both&relations=both`,
 		);
-		log(
-			'roundtrip-options-both',
-			badStato.ok
-				? 'PATCH stato={id,label} accepted'
-				: `PATCH stato={id,label} → ${badStato.status}`,
-		);
-		findings.opts.push({
-			prio: 'P0',
-			id: 'list-both-roundtrip',
-			title: 'Default options/relations=both → objects do not round-trip for Update',
-			detail: `TESTMCP stato both=${JSON.stringify(statoBoth)}; PATCH object → ${badStato.ok ? 'accepted' : badStato.status}. Quick win: default listView options=slugs + relations=uuids, or coerce .id on update.`,
-		});
-		const goodStato = await api(
-			'PATCH',
-			`/api/v1/entities/${testmcp}/records/${tmRow.id}`,
-			{ form_name: 'default', data: { stato: statoBoth.id } },
-			{ allowFail: true },
-		);
-		if (goodStato.ok) {
-			findings.ok.push('PATCH stato with slug extracted from both.id OK');
+		const tmRow = (tmList.records || [])[0];
+		const statoBoth = tmRow?.data?.stato;
+		log('list-options-probe', `stato both=${JSON.stringify(statoBoth)}`);
+		if (statoBoth && typeof statoBoth === 'object' && statoBoth.id) {
+			const badStato = await api(
+				'PATCH',
+				`/api/v1/entities/${OPTIONS_PROBE_ENTITY}/records/${tmRow.id}`,
+				{ form_name: 'default', data: { stato: statoBoth } },
+				{ allowFail: true },
+			);
+			log(
+				'roundtrip-options-both',
+				badStato.ok
+					? 'PATCH stato={id,label} accepted'
+					: `PATCH stato={id,label} → ${badStato.status}`,
+			);
+			findings.opts.push({
+				prio: 'P0',
+				id: 'list-both-roundtrip',
+				title:
+					'Default options/relations=both → objects do not round-trip for Update',
+				detail: `stato both=${JSON.stringify(statoBoth)}; PATCH object → ${badStato.ok ? 'accepted' : badStato.status}. Quick win: default listView options=slugs + relations=uuids, or coerce .id on update.`,
+			});
+			const goodStato = await api(
+				'PATCH',
+				`/api/v1/entities/${OPTIONS_PROBE_ENTITY}/records/${tmRow.id}`,
+				{ form_name: 'default', data: { stato: statoBoth.id } },
+				{ allowFail: true },
+			);
+			if (goodStato.ok) {
+				findings.ok.push('PATCH stato with slug extracted from both.id OK');
+			}
 		}
+	} else {
+		log(
+			'list-options-probe',
+			'SKIP (set CERVIO_SMOKE_ENTITY_ID for options=both round-trip)',
+		);
 	}
 
-	// --- Man Rel Ordine ---
+	// --- Order / line (parent_fk + child) ---
 	const clienteId = await ensureFixture(IDS.cliente, 'default', 'codice', {
 		codice: `n8n-cli-${stamp}`,
 		nome: `Cliente n8n ${stamp}`,
@@ -400,10 +419,10 @@ async function main() {
 	assert(riga.id, 'riga create failed');
 	log('man-rel', `ordine=${ordine.id} riga=${riga.id}`);
 	findings.ok.push(
-		'Man Rel Ordine: link cliente_id + child riga with ordine_id OK',
+		'Order: link cliente_id + child riga with ordine_id OK',
 	);
 
-	// --- Engineering Projects multi_select ---
+	// --- multi_select parent_fk ---
 	const bus = await listEntityRecords(IDS.businessUnit, { limit: 1 });
 	const busId = bus[0]?.id || bus[0]?.record?.id;
 	const contribs = await listEntityRecords(IDS.contributor, { limit: 3 });
@@ -429,7 +448,7 @@ async function main() {
 	assert(eng.id, 'eng project create failed');
 	log('eng-create', `${eng.id} controllers=${cIds.join(',')}`);
 	findings.ok.push(
-		'Create Engineering Project with document_controllers UUID[] (replace default) OK via REST',
+		'Create eng project with document_controllers UUID[] (replace default) OK via REST',
 	);
 
 	// Eng Projects view: lookup columns — labels not UUIDs even with relations=uuids

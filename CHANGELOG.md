@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Live smoke scripts no longer ship lab/tenant UUID defaults; require `CERVIO_SMOKE_*` env (see `.env.example`).
+- Publish workflow: tag-only trigger, `test:coverage` aligned with CI, no npmrc debug dump.
+- CODEOWNERS → `@gabrieleluigi`; GitHub issue/PR templates.
+
 ## [0.2.5] - 2026-11-06
 
 ### Changed
