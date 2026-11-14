@@ -45,7 +45,7 @@ export const sharedFields: INodeProperties[] = [
 			},
 		},
 		description:
-			'Fields below are from this form, not every entity field. Cervio rejects fields that are not on this form. N:M through links are omitted — create on the junction.',
+			'Fields below are from this form, not every entity field. Cervio rejects fields that are not on this form. N:M fields are not in Fields: use Link Records / Unlink Records.',
 	},
 	{
 		displayName: 'Relation Field',
@@ -117,7 +117,7 @@ export const sharedFields: INodeProperties[] = [
 		description: 'Record id from List view, e.g. {{ $json.id }}. Not a form field.',
 	},
 	{
-		displayName: 'Through Field (N:M)',
+		displayName: 'N:M Field',
 		name: 'throughFieldName',
 		type: 'options',
 		typeOptions: {
@@ -131,7 +131,7 @@ export const sharedFields: INodeProperties[] = [
 				operation: ['linkRecords', 'unlinkRecords'],
 			},
 		},
-		description: 'N:M link field (through storage) on the form.',
+		description: 'N:M field on the form. Each link is one row of its junction entity.',
 	},
 	{
 		displayName: 'Far Record ID',
@@ -141,10 +141,56 @@ export const sharedFields: INodeProperties[] = [
 		default: '',
 		displayOptions: {
 			show: {
-				operation: ['linkRecords', 'unlinkRecords'],
+				operation: ['linkRecords'],
 			},
 		},
-		description: 'UUID of the other end of the N:M link.',
+		description:
+			'Record to link on the other side of the N:M field. Linking it again adds another row (e.g. one per year), unless the junction has a uniqueness rule.',
+	},
+	{
+		displayName: 'Junction Fields',
+		name: 'junctionFields',
+		type: 'resourceMapper',
+		default: {
+			mappingMode: 'defineBelow',
+			value: null,
+		},
+		noDataExpression: true,
+		displayOptions: {
+			show: {
+				operation: ['linkRecords'],
+			},
+		},
+		typeOptions: {
+			loadOptionsDependsOn: ['entityId', 'formName', 'throughFieldName'],
+			resourceMapper: {
+				resourceMapperMethod: 'getJunctionFields',
+				mode: 'add',
+				fieldWords: {
+					singular: 'junction field',
+					plural: 'junction fields',
+				},
+				addAllFields: true,
+				multiKeyMatch: false,
+				supportAutoMap: false,
+			},
+		},
+		description:
+			'Other fields of the link row (e.g. year, hours). Required ones must be filled. The two linked records are set by Cervio.',
+	},
+	{
+		displayName: 'Junction Record ID',
+		name: 'junctionRecordId',
+		type: 'string',
+		required: true,
+		default: '',
+		displayOptions: {
+			show: {
+				operation: ['unlinkRecords'],
+			},
+		},
+		description:
+			'ID of the link row to remove, e.g. {{ $json.junction_record_id }} from Link Records, or the ID of a row listed from the junction entity. Other rows with the same far record are kept.',
 	},
 	{
 		displayName: 'Match Field',

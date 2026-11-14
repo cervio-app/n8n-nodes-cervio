@@ -9,24 +9,40 @@ import { NodeOperationError } from 'n8n-workflow';
 
 import {
 	getWriteSchema,
+	listForms,
 	RELATION_DROPDOWN_LIMIT,
 	RELATION_SEARCH_MAX_LIMIT,
 	searchRelationOptions,
 } from '../GenericFunctions';
 import {
 	pickCompiledFieldData,
+	withoutRelationsTo,
 	writeSchemaToMapperFields,
 	type WriteDiscoverySchema,
 } from '../writeSchemaMapper';
 
-export function requireRecordId(ctx: IExecuteFunctions, itemIndex: number): string {
-	const recordId = (ctx.getNodeParameter('recordId', itemIndex) as string)?.trim();
-	if (!recordId) {
-		throw new NodeOperationError(ctx.getNode(), 'Record ID is required.', {
-			itemIndex,
-		});
+/** Trimmed string, or undefined when empty or not a string. */
+export function optionalString(value: unknown): string | undefined {
+	if (typeof value !== 'string') return undefined;
+	const trimmed = value.trim();
+	return trimmed || undefined;
+}
+
+export function requireString(
+	ctx: IExecuteFunctions,
+	parameter: string,
+	itemIndex: number,
+	label: string,
+): string {
+	const value = optionalString(ctx.getNodeParameter(parameter, itemIndex));
+	if (!value) {
+		throw new NodeOperationError(ctx.getNode(), `${label} is required.`, { itemIndex });
 	}
-	return recordId;
+	return value;
+}
+
+export function requireRecordId(ctx: IExecuteFunctions, itemIndex: number): string {
+	return requireString(ctx, 'recordId', itemIndex, 'Record ID');
 }
 
 export function readMappedFieldData(
@@ -46,6 +62,12 @@ export function readMappedFieldData(
 		delete rawFields.id;
 	}
 	return pickCompiledFieldData(rawFields);
+}
+
+/** Other junction fields for Link Records (Junction Fields mapper, defined below only). */
+export function readJunctionFieldData(ctx: IExecuteFunctions, itemIndex: number): IDataObject {
+	const raw = ctx.getNodeParameter('junctionFields.value', itemIndex, {}) as IDataObject | null;
+	return pickCompiledFieldData(raw ?? {});
 }
 
 export function parseResolveValues(
@@ -93,75 +115,114 @@ export async function buildMapperFields(
 ): Promise<ResourceMapperFields> {
 	const entityId = this.getNodeParameter('entityId') as string;
 	const formName = this.getNodeParameter('formName') as string;
-	if (!entityId || !formName) {
-		return { fields: [] };
-	}
+	if (!entityId || !formName) return { fields: [] };
+	const schema = (await getWriteSchema.call(this, entityId, formName)) as WriteDiscoverySchema;
+	return { fields: await mapperFieldsWithRelationOptions.call(this, entityId, formName, schema, mode) };
+}
 
-	const schema = (await getWriteSchema.call(
-		this,
-		entityId,
-		formName,
-	)) as WriteDiscoverySchema;
+/**
+ * Junction Fields for Link Records: the junction entity's create form, without the
+ * two keys Cervio sets itself. Empty when the junction has no other fields.
+ */
+export async function buildJunctionMapperFields(
+	this: ILoadOptionsFunctions,
+): Promise<ResourceMapperFields> {
+	const entityId = this.getNodeParameter('entityId') as string;
+	const formName = this.getNodeParameter('formName') as string;
+	const throughFieldName = this.getNodeParameter('throughFieldName') as string;
+	if (!entityId || !formName || !throughFieldName) return { fields: [] };
 
+	const schema = (await getWriteSchema.call(this, entityId, formName)) as WriteDiscoverySchema;
+	const through = schema.fields.find(
+		(f) => f.name === throughFieldName && f.input.storage === 'through',
+	);
+	const junctionEntityId = through?.input.junction_entity_id;
+	if (!junctionEntityId) return { fields: [] };
+
+	const forms = await listForms.call(this, junctionEntityId);
+	const form = forms.find((f) => f.is_default) ?? forms[0];
+	if (!form) return { fields: [] };
+
+	const junctionSchema = withoutRelationsTo(
+		(await getWriteSchema.call(this, junctionEntityId, form.name)) as WriteDiscoverySchema,
+		[entityId, through.input.relation_entity_id],
+	);
+	return {
+		fields: await mapperFieldsWithRelationOptions.call(
+			this,
+			junctionEntityId,
+			form.name,
+			junctionSchema,
+			'create',
+		),
+	};
+}
+
+/**
+ * Mapper columns for a form. Single relations become a dropdown when their
+ * candidates fit under RELATION_DROPDOWN_LIMIT; multi relations stay UUID arrays
+ * (browse them with “Search Relation”).
+ */
+async function mapperFieldsWithRelationOptions(
+	this: ILoadOptionsFunctions,
+	entityId: string,
+	formName: string,
+	schema: WriteDiscoverySchema,
+	mode: 'create' | 'update',
+): Promise<ResourceMapperFields['fields']> {
 	const fields = writeSchemaToMapperFields(schema, mode);
+	const appendDescription = (field: (typeof fields)[number], text: string) => {
+		field.description = [field.description, text].filter(Boolean).join(' ');
+	};
 
-	// Single relations: dropdown when candidates fit under RELATION_DROPDOWN_LIMIT.
-	// Multi_select stays array (UUID[]); browse all via “Search Relation”.
 	for (const field of fields) {
 		const schemaField = schema.fields.find((f) => f.name === field.id);
 		if (!schemaField || schemaField.input.mode !== 'relation') continue;
 
+		let records: Array<{ id: string; label: string }>;
 		try {
-			const records = await searchRelationOptions.call(
+			records = await searchRelationOptions.call(
 				this,
 				entityId,
 				formName,
 				field.id,
 				RELATION_DROPDOWN_LIMIT,
 			);
-			if (schemaField.input.multi_select) {
-				if (records.length > 0 && records.length < RELATION_DROPDOWN_LIMIT) {
-					const preview = records
-						.slice(0, 8)
-						.map((r) => `${r.label} (${r.id})`)
-						.join('; ');
-					field.description = [
-						field.description,
-						`Candidate preview: ${preview}${records.length > 8 ? '…' : ''}. Use “Search Relation” to filter.`,
-					]
-						.filter(Boolean)
-						.join(' ');
-				} else if (records.length >= RELATION_DROPDOWN_LIMIT) {
-					field.description = [
-						field.description,
-						`≥${RELATION_DROPDOWN_LIMIT} candidates: use “Search Relation” (q + limit up to ${RELATION_SEARCH_MAX_LIMIT}), then UUID[] in Fields.`,
-					]
-						.filter(Boolean)
-						.join(' ');
-				}
-				continue;
-			}
-
-			if (records.length > 0 && records.length < RELATION_DROPDOWN_LIMIT) {
-				field.type = 'options';
-				field.options = records.map((r) => ({
-					name: r.label,
-					value: r.id,
-				}));
-			} else if (records.length >= RELATION_DROPDOWN_LIMIT) {
-				field.description = [
-					field.description,
-					`Too many records for the dropdown (cap ${RELATION_DROPDOWN_LIMIT}): use “Search Relation” or paste the UUID.`,
-				]
-					.filter(Boolean)
-					.join(' ');
-			}
 		} catch {
-			// Keep as free-text UUID / array field.
+			continue; // Keep the field as free-text UUID / array.
+		}
+		const fitsDropdown = records.length > 0 && records.length < RELATION_DROPDOWN_LIMIT;
+
+		if (schemaField.input.multi_select) {
+			if (fitsDropdown) {
+				const preview = records
+					.slice(0, 8)
+					.map((r) => `${r.label} (${r.id})`)
+					.join('; ');
+				appendDescription(
+					field,
+					`Candidate preview: ${preview}${records.length > 8 ? '…' : ''}. Use “Search Relation” to filter.`,
+				);
+			} else if (records.length >= RELATION_DROPDOWN_LIMIT) {
+				appendDescription(
+					field,
+					`≥${RELATION_DROPDOWN_LIMIT} candidates: use “Search Relation” (q + limit up to ${RELATION_SEARCH_MAX_LIMIT}), then UUID[] in Fields.`,
+				);
+			}
+			continue;
+		}
+
+		if (fitsDropdown) {
+			field.type = 'options';
+			field.options = records.map((r) => ({ name: r.label, value: r.id }));
+		} else if (records.length >= RELATION_DROPDOWN_LIMIT) {
+			appendDescription(
+				field,
+				`Too many records for the dropdown (cap ${RELATION_DROPDOWN_LIMIT}): use “Search Relation” or paste the UUID.`,
+			);
 		}
 	}
-
-	return { fields };
+	return fields;
 }
 
 /** Cap aligned with Cervio `MANUAL_DATA_MAX_BYTES` (64 KiB). */

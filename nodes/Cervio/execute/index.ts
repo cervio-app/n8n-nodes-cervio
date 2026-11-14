@@ -1,91 +1,77 @@
 import type { IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
-import { NodeOperationError } from 'n8n-workflow';
+import { NodeApiError, NodeOperationError } from 'n8n-workflow';
 
 import { resourceForOperation } from '../resourceMap';
-import {
-	executeListRecordsBatch,
-	executeListViewBatch,
-	executeSearchRelationBatch,
-} from './batchOps';
-import { executeDocumentOperations } from './documents';
-import { executeNotificationOperations } from './notifications';
-import { executeRecordOperations } from './records';
-import { executeRelationOperations } from './relations';
-import { executeWorkflowOperations } from './workflows';
+import { documentOperations } from './documents';
+import { listOperations } from './lists';
+import { notificationOperations } from './notifications';
+import { recordOperations } from './records';
+import { relationOperations } from './relations';
+import type { OperationHandler } from './types';
+import { workflowOperations } from './workflows';
 
-const BATCH_OPS = new Set(['searchRelation', 'listView', 'listRecords']);
-const WORKFLOW_OPS = new Set(['startWorkflow', 'getWorkflowRun']);
-const NOTIFICATION_OPS = new Set(['notifySelf', 'notifyUsers']);
-const DOCUMENT_OPS = new Set([
-	'listDocuments',
-	'uploadDocument',
-	'openDocument',
-	'generateDocument',
-]);
-const RELATION_OPS = new Set(['linkRecords', 'unlinkRecords', 'resolveRelation']);
-const RECORD_OPS = new Set([
-	'get',
-	'delete',
-	'create',
-	'update',
-	'upsert',
-	'validateDraft',
-]);
+const OPERATIONS: Record<string, OperationHandler> = {
+	...recordOperations,
+	...listOperations,
+	...relationOperations,
+	...documentOperations,
+	...workflowOperations,
+	...notificationOperations,
+};
 
-export async function executeCervio(
-	this: IExecuteFunctions,
-): Promise<INodeExecutionData[][]> {
-	const items = this.getInputData();
-	const returnData: INodeExecutionData[] = [];
-	const operation = this.getNodeParameter('operation', 0) as string;
-
-	let resource = this.getNodeParameter('resource', 0, '') as string;
-	if (!resource) {
-		resource = resourceForOperation(operation);
+/** Wraps any error as an n8n node error tied to the item, keeping API errors as they are. */
+function toNodeError(
+	ctx: IExecuteFunctions,
+	error: unknown,
+	itemIndex: number,
+): NodeApiError | NodeOperationError {
+	if (error instanceof NodeApiError || error instanceof NodeOperationError) {
+		if (error.context.itemIndex === undefined) error.context.itemIndex = itemIndex;
+		return error;
 	}
-	if (resource && resourceForOperation(operation) !== resource) {
+	return new NodeOperationError(ctx.getNode(), error instanceof Error ? error : String(error), {
+		itemIndex,
+	});
+}
+
+/**
+ * Runs the selected operation once per input item. Each output item is paired with
+ * the input item it came from; with "Continue On Fail" a failed item becomes
+ * `{ error }` and the others still run.
+ */
+export async function executeCervio(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {
+	const items = this.getInputData();
+	const operation = this.getNodeParameter('operation', 0) as string;
+	const resource =
+		(this.getNodeParameter('resource', 0, '') as string) || resourceForOperation(operation);
+	if (resourceForOperation(operation) !== resource) {
 		throw new NodeOperationError(
 			this.getNode(),
 			`Operation "${operation}" does not match resource "${resource}". Change resource or operation.`,
 		);
 	}
+	const handler = OPERATIONS[operation];
+	if (!handler) {
+		throw new NodeOperationError(this.getNode(), `Unsupported operation: ${operation}`);
+	}
 
-	if (BATCH_OPS.has(operation)) {
-		let batch: INodeExecutionData[];
-		if (operation === 'searchRelation') {
-			batch = await executeSearchRelationBatch.call(this);
-		} else if (operation === 'listView') {
-			batch = await executeListViewBatch.call(this);
-		} else {
-			batch = await executeListRecordsBatch.call(this);
+	const returnData: INodeExecutionData[] = [];
+	for (let i = 0; i < items.length; i++) {
+		try {
+			const result = await handler.call(this, i, items);
+			for (const json of Array.isArray(result) ? result : [result]) {
+				returnData.push({ json, pairedItem: { item: i } });
+			}
+		} catch (error) {
+			if (this.continueOnFail()) {
+				returnData.push({
+					json: { error: error instanceof Error ? error.message : String(error) },
+					pairedItem: { item: i },
+				});
+				continue;
+			}
+			throw toNodeError(this, error, i);
 		}
-		return [batch];
 	}
-
-	if (WORKFLOW_OPS.has(operation)) {
-		await executeWorkflowOperations.call(this, items, operation, returnData);
-		return [returnData];
-	}
-
-	if (NOTIFICATION_OPS.has(operation)) {
-		await executeNotificationOperations.call(this, items, operation, returnData);
-		return [returnData];
-	}
-
-	if (DOCUMENT_OPS.has(operation)) {
-		await executeDocumentOperations.call(this, items, operation, returnData);
-		return [returnData];
-	}
-
-	if (RELATION_OPS.has(operation)) {
-		await executeRelationOperations.call(this, items, operation, returnData);
-		return [returnData];
-	}
-
-	if (RECORD_OPS.has(operation)) {
-		await executeRecordOperations.call(this, items, operation, returnData);
-		return [returnData];
-	}
-
-	throw new NodeOperationError(this.getNode(), `Unsupported operation: ${operation}`);
+	return [returnData];
 }

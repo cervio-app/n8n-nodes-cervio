@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Breaking:** **Unlink Records** removes one N:M link row by **Junction Record ID** (`DELETE …/links` body `{ from_record_id, junction_record_id }`), matching Cervio's links API. The old *Far Record ID* input on Unlink is gone: Cervio no longer unlinks by record pair.
+- **Breaking:** **List**, **List view** and **Search** now run once per input item, like every other operation, and pair each output with its input item. Use the node setting **Execute Once** for the previous single-run behaviour.
+- **Link Records** returns `{ junction_record_id, record_id, far_record_id, data? }`. Linking the same far record again adds another row.
+- Ids used in URL paths (entity, record, view, document, workflow, run) must be UUIDs; anything else is rejected before the request is sent.
+- Errors raised while processing an item carry that item's index.
+- API errors show Cervio's own message (e.g. `Missing required junction fields: anno`) instead of n8n's generic text for the HTTP status.
+- Parameter **Through Field (N:M)** is now labelled **N:M Field** (same parameter, existing workflows unchanged).
+
+### Added
+
+- **Link Records → Junction Fields:** fill the other fields of the link row (e.g. year, hours) from the junction entity's create form.
+- Unit tests for every operation through mocks; coverage gate on `execute/**`.
+
+### Removed
+
+- Internal `batchOps` module and the per-resource copies of the error handling: one per-item runner handles `continueOnFail` and `pairedItem` for all operations.
+
 ## [0.2.6] - 2026-11-06
 
 ### Added

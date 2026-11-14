@@ -111,13 +111,13 @@ export const operationPropertiesByResource: INodeProperties[] = [
 			{
 				name: 'Link Records',
 				value: 'linkRecords',
-				description: 'N:M link (through field on the form)',
+				description: 'Add one N:M link row, with optional junction fields',
 				action: 'Link N:M records',
 			},
 			{
 				name: 'Unlink Records',
 				value: 'unlinkRecords',
-				description: 'Unlink N:M',
+				description: 'Remove one N:M link row by its ID',
 				action: 'Unlink N:M records',
 			},
 		],

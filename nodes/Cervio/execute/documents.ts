@@ -1,5 +1,4 @@
-import type { IDataObject, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
-import { NodeApiError, NodeOperationError } from 'n8n-workflow';
+import type { IDataObject } from 'n8n-workflow';
 
 import {
 	generateRecordDocument,
@@ -7,128 +6,48 @@ import {
 	openRecordDocument,
 	uploadRecordDocument,
 } from '../GenericFunctions';
-import { requireRecordId } from './helpers';
+import { optionalString, requireRecordId, requireString } from './helpers';
+import type { OperationHandler } from './types';
 
-export async function executeDocumentOperations(
-	this: IExecuteFunctions,
-	items: INodeExecutionData[],
-	operation: string,
-	returnData: INodeExecutionData[],
-): Promise<void> {
-	for (let i = 0; i < items.length; i++) {
-		try {
-			const entityId = this.getNodeParameter('entityId', i) as string;
+export const documentOperations: Record<string, OperationHandler> = {
+	async listDocuments(i) {
+		const entityId = this.getNodeParameter('entityId', i) as string;
+		const recordId = requireRecordId(this, i);
+		const docs = await listRecordDocuments.call(this, entityId, recordId);
+		// One item even when empty, so the record stays visible downstream.
+		return docs.length > 0 ? (docs as IDataObject[]) : [{ _empty: true, record_id: recordId }];
+	},
 
-			if (operation === 'listDocuments') {
-				const recordId = requireRecordId(this, i);
-				const docs = await listRecordDocuments.call(this, entityId, recordId);
-				for (const doc of docs) {
-					returnData.push({
-						json: doc as IDataObject,
-						pairedItem: { item: i },
-					});
-				}
-				if (docs.length === 0) {
-					returnData.push({
-						json: { _empty: true, record_id: recordId },
-						pairedItem: { item: i },
-					});
-				}
-				continue;
-			}
+	async openDocument(i) {
+		const entityId = this.getNodeParameter('entityId', i) as string;
+		const recordId = requireRecordId(this, i);
+		const documentId = requireString(this, 'documentId', i, 'Document ID');
+		return (await openRecordDocument.call(this, entityId, recordId, documentId)) as IDataObject;
+	},
 
-			if (operation === 'openDocument') {
-				const recordId = requireRecordId(this, i);
-				const documentId = (this.getNodeParameter('documentId', i) as string)?.trim();
-				if (!documentId) {
-					throw new NodeOperationError(this.getNode(), 'Document ID is required.', {
-						itemIndex: i,
-					});
-				}
-				const opened = await openRecordDocument.call(
-					this,
-					entityId,
-					recordId,
-					documentId,
-				);
-				returnData.push({
-					json: opened as IDataObject,
-					pairedItem: { item: i },
-				});
-				continue;
-			}
+	async generateDocument(i) {
+		const entityId = this.getNodeParameter('entityId', i) as string;
+		const recordId = requireRecordId(this, i);
+		const templateId = requireString(this, 'templateId', i, 'Template ID');
+		return (await generateRecordDocument.call(this, entityId, recordId, templateId)) as IDataObject;
+	},
 
-			if (operation === 'generateDocument') {
-				const recordId = requireRecordId(this, i);
-				const templateId = (this.getNodeParameter('templateId', i) as string)?.trim();
-				if (!templateId) {
-					throw new NodeOperationError(this.getNode(), 'Template ID is required.', {
-						itemIndex: i,
-					});
-				}
-				const generated = await generateRecordDocument.call(
-					this,
-					entityId,
-					recordId,
-					templateId,
-				);
-				returnData.push({
-					json: generated as IDataObject,
-					pairedItem: { item: i },
-				});
-				continue;
-			}
+	async uploadDocument(i, items) {
+		const entityId = this.getNodeParameter('entityId', i) as string;
+		const recordId = requireRecordId(this, i);
+		const binaryProperty =
+			optionalString(this.getNodeParameter('binaryPropertyName', i, 'data')) ?? 'data';
+		const options = this.getNodeParameter('uploadOptions', i, {}) as IDataObject;
+		const buffer = await this.helpers.getBinaryDataBuffer(i, binaryProperty);
+		const meta = items[i].binary?.[binaryProperty];
+		const fileName = optionalString(options.fileName) ?? meta?.fileName ?? 'upload.bin';
+		const mimeType = optionalString(meta?.mimeType) ?? 'application/octet-stream';
 
-			if (operation === 'uploadDocument') {
-				const recordId = requireRecordId(this, i);
-				const binaryProperty =
-					(this.getNodeParameter('binaryPropertyName', i, 'data') as string) || 'data';
-				const uploadOptions = this.getNodeParameter('uploadOptions', i, {}) as IDataObject;
-				const buffer = await this.helpers.getBinaryDataBuffer(i, binaryProperty);
-				const binaryBag = items[i].binary as
-					| Record<string, { fileName?: string; mimeType?: string }>
-					| undefined;
-				const binaryMeta = binaryBag?.[binaryProperty];
-				const fileName =
-					(typeof uploadOptions.fileName === 'string' && uploadOptions.fileName.trim()
-						? uploadOptions.fileName.trim()
-						: binaryMeta?.fileName) || 'upload.bin';
-				const form = new FormData();
-				const mime =
-					binaryMeta?.mimeType && binaryMeta.mimeType.trim()
-						? binaryMeta.mimeType
-						: 'application/octet-stream';
-				form.append('file', new Blob([new Uint8Array(buffer)], { type: mime }), fileName);
-				if (typeof uploadOptions.title === 'string' && uploadOptions.title.trim()) {
-					form.append('title', uploadOptions.title.trim());
-				}
-				form.append('file_name', fileName);
-				const uploaded = await uploadRecordDocument.call(this, entityId, recordId, form);
-				returnData.push({
-					json: uploaded as IDataObject,
-					pairedItem: { item: i },
-				});
-				continue;
-			}
-		} catch (error) {
-			if (this.continueOnFail()) {
-				returnData.push({
-					json: {
-						error: error instanceof Error ? error.message : String(error),
-					},
-					pairedItem: { item: i },
-				});
-				continue;
-			}
-			const wrapped =
-				error instanceof NodeOperationError || error instanceof NodeApiError
-					? error
-					: new NodeOperationError(
-							this.getNode(),
-							error instanceof Error ? error.message : String(error),
-							{ itemIndex: i },
-						);
-			throw wrapped;
-		}
-	}
-}
+		const form = new FormData();
+		form.append('file', new Blob([new Uint8Array(buffer)], { type: mimeType }), fileName);
+		form.append('file_name', fileName);
+		const title = optionalString(options.title);
+		if (title) form.append('title', title);
+		return (await uploadRecordDocument.call(this, entityId, recordId, form)) as IDataObject;
+	},
+};

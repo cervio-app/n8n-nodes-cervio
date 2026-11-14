@@ -160,6 +160,23 @@ export function writeSchemaToMapperFields(
 	});
 }
 
+/**
+ * Junction schema without the relation fields to the two linked entities: Cervio
+ * fills those keys itself when it creates the link, and ignores them in `data`.
+ */
+export function withoutRelationsTo(
+	schema: WriteDiscoverySchema,
+	entityIds: ReadonlyArray<string | null | undefined>,
+): WriteDiscoverySchema {
+	const skip = new Set(entityIds.filter((id): id is string => Boolean(id)));
+	return {
+		...schema,
+		fields: schema.fields.filter(
+			(f) => !(f.input.mode === 'relation' && f.input.relation_entity_id && skip.has(f.input.relation_entity_id)),
+		),
+	};
+}
+
 /** Unwrap listView `{ id, label }` (and arrays thereof) into write-ready ids/slugs. */
 export function coerceWriteValue(value: unknown): unknown {
 	if (value === undefined || value === null) return value;

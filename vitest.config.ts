@@ -15,7 +15,12 @@ export default defineConfig({
 			exclude: ['**/__tests__/**', '**/*.test.ts'],
 			reporter: ['text', 'json-summary'],
 			thresholds: {
-				// Focused modules must stay well covered; execute paths grow via mocks.
+				// Focused modules must stay well covered; execute paths are tested through mocks.
+				'nodes/Cervio/execute/**/*.ts': {
+					lines: 75,
+					functions: 70,
+					statements: 70,
+				},
 				'nodes/Cervio/baseUrl.ts': {
 					lines: 90,
 					functions: 90,

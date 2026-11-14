@@ -13,12 +13,28 @@ import { assertSafeCervioBaseUrl } from './baseUrl';
 
 type CervioContext = IExecuteFunctions | ILoadOptionsFunctions | IHookFunctions;
 
-export async function cervioApiRequest(
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * Path segment for a Cervio id. Ids often come from expressions, so they are
+ * checked here: a value that is not a UUID never reaches the URL.
+ */
+export function idSegment(value: string, label: string): string {
+	const id = String(value ?? '').trim();
+	if (!UUID_RE.test(id)) {
+		throw new Error(`${label} must be a UUID, got "${id.slice(0, 60)}".`);
+	}
+	return id;
+}
+
+/** Path segment for a name (form or field name). */
+function nameSegment(value: string): string {
+	return encodeURIComponent(String(value ?? '').trim());
+}
+
+async function sendCervioRequest(
 	this: CervioContext,
-	method: IHttpRequestMethods,
-	path: string,
-	body: IDataObject | undefined = undefined,
-	qs: IDataObject = {},
+	options: Omit<IHttpRequestOptions, 'url'> & { path: string },
 ): Promise<unknown> {
 	const credentials = await this.getCredentials('cervioApi');
 	let baseUrl: string;
@@ -30,30 +46,58 @@ export async function cervioApiRequest(
 		} as JsonObject);
 	}
 
-	const options: IHttpRequestOptions = {
-		method,
+	const { path, ...rest } = options;
+	const request: IHttpRequestOptions = {
+		...rest,
 		url: `${baseUrl}${path.startsWith('/') ? path : `/${path}`}`,
-		qs,
-		json: true,
-		headers: {
-			Accept: 'application/json',
-		},
+		headers: { Accept: 'application/json', ...(rest.headers ?? {}) },
 	};
 
-	if (body !== undefined) {
-		options.body = body;
-	}
-
 	try {
-		const request = this.helpers.httpRequestWithAuthentication as (
+		const send = this.helpers.httpRequestWithAuthentication as (
 			this: CervioContext,
 			credentialsType: string,
 			requestOptions: IHttpRequestOptions,
 		) => Promise<unknown>;
-		return await request.call(this, 'cervioApi', options);
+		return await send.call(this, 'cervioApi', request);
 	} catch (error) {
-		throw new NodeApiError(this.getNode(), error as JsonObject);
+		const message = cervioErrorMessage(error);
+		throw new NodeApiError(this.getNode(), error as JsonObject, message ? { message } : {});
 	}
+}
+
+/**
+ * Cervio answers errors as `{ error: code, message }`. n8n would show only a generic
+ * text for the HTTP status ("Bad request - please check your parameters"), so the
+ * Cervio message becomes the error message.
+ */
+export function cervioErrorMessage(error: unknown): string | undefined {
+	const e = error as {
+		response?: { data?: unknown };
+		cause?: { response?: { data?: unknown } };
+		reason?: { response?: { data?: unknown } };
+	} | null;
+	const data = e?.response?.data ?? e?.cause?.response?.data ?? e?.reason?.response?.data;
+	if (!data || typeof data !== 'object') return undefined;
+	const { message, error: code } = data as { message?: unknown; error?: unknown };
+	if (typeof message === 'string' && message.trim()) return message.trim();
+	return typeof code === 'string' && code.trim() ? code.trim() : undefined;
+}
+
+export async function cervioApiRequest(
+	this: CervioContext,
+	method: IHttpRequestMethods,
+	path: string,
+	body: IDataObject | undefined = undefined,
+	qs: IDataObject = {},
+): Promise<unknown> {
+	return sendCervioRequest.call(this, {
+		method,
+		path,
+		qs,
+		json: true,
+		...(body !== undefined ? { body } : {}),
+	});
 }
 
 export type CervioEntity = {
@@ -101,7 +145,7 @@ export async function listForms(
 	const res = (await cervioApiRequest.call(
 		this,
 		'GET',
-		`/api/v1/admin/entities/${entityId}/forms`,
+		`/api/v1/admin/entities/${idSegment(entityId, 'Entity ID')}/forms`,
 	)) as { forms?: CervioForm[] };
 	return res.forms ?? [];
 }
@@ -113,7 +157,7 @@ export async function listViews(
 	const res = (await cervioApiRequest.call(
 		this,
 		'GET',
-		`/api/v1/admin/entities/${entityId}/views`,
+		`/api/v1/admin/entities/${idSegment(entityId, 'Entity ID')}/views`,
 	)) as { views?: CervioView[] };
 	return res.views ?? [];
 }
@@ -126,7 +170,7 @@ export async function getWriteSchema(
 	return cervioApiRequest.call(
 		this,
 		'GET',
-		`/api/v1/entities/${entityId}/forms/${encodeURIComponent(formName)}/write-schema`,
+		`/api/v1/entities/${idSegment(entityId, 'Entity ID')}/forms/${nameSegment(formName)}/write-schema`,
 	);
 }
 
@@ -151,7 +195,7 @@ export async function searchRelationOptions(
 	const res = (await cervioApiRequest.call(
 		this,
 		'GET',
-		`/api/v1/entities/${entityId}/forms/${encodeURIComponent(formName)}/fields/${encodeURIComponent(fieldName)}/relation-options`,
+		`/api/v1/entities/${idSegment(entityId, 'Entity ID')}/forms/${nameSegment(formName)}/fields/${nameSegment(fieldName)}/relation-options`,
 		undefined,
 		qs,
 	)) as { records?: Array<{ id: string; label?: string }> };
@@ -170,7 +214,7 @@ export async function createRecord(
 	return (await cervioApiRequest.call(
 		this,
 		'POST',
-		`/api/v1/entities/${entityId}/records`,
+		`/api/v1/entities/${idSegment(entityId, 'Entity ID')}/records`,
 		{ form_name: formName, data },
 	)) as { id: string };
 }
@@ -194,7 +238,7 @@ export async function updateRecord(
 	return (await cervioApiRequest.call(
 		this,
 		'PATCH',
-		`/api/v1/entities/${entityId}/records/${recordId}`,
+		`/api/v1/entities/${idSegment(entityId, 'Entity ID')}/records/${idSegment(recordId, 'Record ID')}`,
 		body,
 	)) as { id: string };
 }
@@ -207,7 +251,7 @@ export async function listViewRecords(
 	return (await cervioApiRequest.call(
 		this,
 		'GET',
-		`/api/v1/views/${viewId}/records`,
+		`/api/v1/views/${idSegment(viewId, 'View ID')}/records`,
 		undefined,
 		qs,
 	)) as CervioListPage;
@@ -220,7 +264,7 @@ export async function countViewRecords(
 	const res = (await cervioApiRequest.call(
 		this,
 		'GET',
-		`/api/v1/views/${viewId}/records/count`,
+		`/api/v1/views/${idSegment(viewId, 'View ID')}/records/count`,
 	)) as { count?: number };
 	return res.count ?? 0;
 }
@@ -234,43 +278,12 @@ export async function cervioApiRequestMultipart(
 	path: string,
 	body: FormData,
 ): Promise<unknown> {
-	const credentials = await this.getCredentials('cervioApi');
-	let baseUrl: string;
+	const raw = await sendCervioRequest.call(this, { method, path, body, json: false });
+	if (typeof raw !== 'string') return raw;
 	try {
-		baseUrl = assertSafeCervioBaseUrl(String(credentials.baseUrl ?? ''));
-	} catch (error) {
-		throw new NodeApiError(this.getNode(), {
-			message: error instanceof Error ? error.message : String(error),
-		} as JsonObject);
-	}
-
-	const options: IHttpRequestOptions = {
-		method,
-		url: `${baseUrl}${path.startsWith('/') ? path : `/${path}`}`,
-		body,
-		json: false,
-		headers: {
-			Accept: 'application/json',
-		},
-	};
-
-	try {
-		const request = this.helpers.httpRequestWithAuthentication as (
-			this: CervioContext,
-			credentialsType: string,
-			requestOptions: IHttpRequestOptions,
-		) => Promise<unknown>;
-		const raw = await request.call(this, 'cervioApi', options);
-		if (typeof raw === 'string') {
-			try {
-				return JSON.parse(raw) as unknown;
-			} catch {
-				return raw;
-			}
-		}
+		return JSON.parse(raw) as unknown;
+	} catch {
 		return raw;
-	} catch (error) {
-		throw new NodeApiError(this.getNode(), error as JsonObject);
 	}
 }
 
@@ -297,7 +310,7 @@ export async function getRecord(
 	const res = (await cervioApiRequest.call(
 		this,
 		'GET',
-		`/api/v1/entities/${entityId}/records/${recordId}`,
+		`/api/v1/entities/${idSegment(entityId, 'Entity ID')}/records/${idSegment(recordId, 'Record ID')}`,
 	)) as { record?: unknown };
 	return res.record;
 }
@@ -310,7 +323,7 @@ export async function deleteRecord(
 	return (await cervioApiRequest.call(
 		this,
 		'DELETE',
-		`/api/v1/entities/${entityId}/records/${recordId}`,
+		`/api/v1/entities/${idSegment(entityId, 'Entity ID')}/records/${idSegment(recordId, 'Record ID')}`,
 	)) as { ok: boolean };
 }
 
@@ -322,7 +335,7 @@ export async function listEntityRecords(
 	const res = (await cervioApiRequest.call(
 		this,
 		'GET',
-		`/api/v1/entities/${entityId}/records`,
+		`/api/v1/entities/${idSegment(entityId, 'Entity ID')}/records`,
 		undefined,
 		qs,
 	)) as { records?: Array<{ id: string; data?: Record<string, unknown> }> };
@@ -341,7 +354,7 @@ export async function validateDraft(
 	return cervioApiRequest.call(
 		this,
 		'POST',
-		`/api/v1/entities/${entityId}/forms/${encodeURIComponent(formName)}/validate-draft`,
+		`/api/v1/entities/${idSegment(entityId, 'Entity ID')}/forms/${nameSegment(formName)}/validate-draft`,
 		body,
 	);
 }
@@ -356,7 +369,7 @@ export async function upsertRecord(
 	return (await cervioApiRequest.call(
 		this,
 		'POST',
-		`/api/v1/entities/${entityId}/records/upsert`,
+		`/api/v1/entities/${idSegment(entityId, 'Entity ID')}/records/upsert`,
 		{ form_name: formName, match_field: matchField, data },
 	)) as { id: string; action?: string };
 }
@@ -369,7 +382,7 @@ export async function listRecordDocuments(
 	const res = (await cervioApiRequest.call(
 		this,
 		'GET',
-		`/api/v1/entities/${entityId}/records/${recordId}/documents`,
+		`/api/v1/entities/${idSegment(entityId, 'Entity ID')}/records/${idSegment(recordId, 'Record ID')}/documents`,
 	)) as { documents?: unknown[] };
 	return res.documents ?? [];
 }
@@ -383,7 +396,7 @@ export async function uploadRecordDocument(
 	return cervioApiRequestMultipart.call(
 		this,
 		'POST',
-		`/api/v1/entities/${entityId}/records/${recordId}/documents`,
+		`/api/v1/entities/${idSegment(entityId, 'Entity ID')}/records/${idSegment(recordId, 'Record ID')}/documents`,
 		form,
 	);
 }
@@ -397,7 +410,7 @@ export async function openRecordDocument(
 	return cervioApiRequest.call(
 		this,
 		'GET',
-		`/api/v1/entities/${entityId}/records/${recordId}/documents/${documentId}/open`,
+		`/api/v1/entities/${idSegment(entityId, 'Entity ID')}/records/${idSegment(recordId, 'Record ID')}/documents/${idSegment(documentId, 'Document ID')}/open`,
 	);
 }
 
@@ -410,40 +423,59 @@ export async function generateRecordDocument(
 	return cervioApiRequest.call(
 		this,
 		'POST',
-		`/api/v1/entities/${entityId}/records/${recordId}/documents/generate`,
+		`/api/v1/entities/${idSegment(entityId, 'Entity ID')}/records/${idSegment(recordId, 'Record ID')}/documents/generate`,
 		{ template_id: templateId },
 	);
 }
 
+function linksPath(entityId: string, formName: string, throughFieldName: string): string {
+	return `/api/v1/entities/${idSegment(entityId, 'Entity ID')}/forms/${nameSegment(formName)}/fields/${nameSegment(throughFieldName)}/links`;
+}
+
+/**
+ * Create one N:M link: one junction row, returned by id. The same far record
+ * can be linked more than once; only the junction's uniqueness rules forbid it.
+ * `data` holds the other junction fields (the two record keys are set by Cervio).
+ */
 export async function linkThroughRecords(
 	this: CervioContext,
 	entityId: string,
 	formName: string,
-	fieldName: string,
+	throughFieldName: string,
 	fromRecordId: string,
 	farRecordId: string,
+	data?: IDataObject,
 ): Promise<{ junction_record_id: string }> {
+	const body: IDataObject = {
+		from_record_id: idSegment(fromRecordId, 'Record ID'),
+		far_record_id: idSegment(farRecordId, 'Far Record ID'),
+	};
+	if (data && Object.keys(data).length > 0) body.data = data;
 	return (await cervioApiRequest.call(
 		this,
 		'POST',
-		`/api/v1/entities/${entityId}/forms/${encodeURIComponent(formName)}/fields/${encodeURIComponent(fieldName)}/links`,
-		{ from_record_id: fromRecordId, far_record_id: farRecordId },
+		linksPath(entityId, formName, throughFieldName),
+		body,
 	)) as { junction_record_id: string };
 }
 
-export async function unlinkThroughRecords(
+/** Remove one N:M link: the junction row `junctionRecordId`, which must belong to `fromRecordId`. */
+export async function unlinkThroughRecord(
 	this: CervioContext,
 	entityId: string,
 	formName: string,
-	fieldName: string,
+	throughFieldName: string,
 	fromRecordId: string,
-	farRecordId: string,
+	junctionRecordId: string,
 ): Promise<{ deleted: number }> {
 	return (await cervioApiRequest.call(
 		this,
 		'DELETE',
-		`/api/v1/entities/${entityId}/forms/${encodeURIComponent(formName)}/fields/${encodeURIComponent(fieldName)}/links`,
-		{ from_record_id: fromRecordId, far_record_id: farRecordId },
+		linksPath(entityId, formName, throughFieldName),
+		{
+			from_record_id: idSegment(fromRecordId, 'Record ID'),
+			junction_record_id: idSegment(junctionRecordId, 'Junction Record ID'),
+		},
 	)) as { deleted: number };
 }
 
@@ -456,7 +488,7 @@ export async function resolveNaturalKeys(
 ): Promise<unknown> {
 	const body: IDataObject = { match_field: matchField, values };
 	if (fieldName) body.field_name = fieldName;
-	return cervioApiRequest.call(this, 'POST', `/api/v1/entities/${entityId}/resolve`, body);
+	return cervioApiRequest.call(this, 'POST', `/api/v1/entities/${idSegment(entityId, 'Entity ID')}/resolve`, body);
 }
 
 export async function startWorkflowRun(
@@ -470,7 +502,7 @@ export async function startWorkflowRun(
 	return (await cervioApiRequest.call(
 		this,
 		'POST',
-		`/api/v1/workflows/${workflowId}/runs`,
+		`/api/v1/workflows/${idSegment(workflowId, 'Workflow ID')}/runs`,
 		body,
 	)) as { invocation_id: string };
 }
@@ -483,7 +515,7 @@ export async function getWorkflowRunStatus(
 	return cervioApiRequest.call(
 		this,
 		'GET',
-		`/api/v1/admin/workflows/${workflowId}/runs/${runId}`,
+		`/api/v1/admin/workflows/${idSegment(workflowId, 'Workflow ID')}/runs/${idSegment(runId, 'Run ID')}`,
 	);
 }
 

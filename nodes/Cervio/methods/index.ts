@@ -12,7 +12,7 @@ import {
 	listWorkflows,
 } from '../GenericFunctions';
 import { formLabelWithRole, type WriteDiscoverySchema } from '../writeSchemaMapper';
-import { buildMapperFields } from '../execute/helpers';
+import { buildJunctionMapperFields, buildMapperFields } from '../execute/helpers';
 
 export const cervioMethods = {
 		loadOptions: {
@@ -175,6 +175,12 @@ export const cervioMethods = {
 				this: ILoadOptionsFunctions,
 			): Promise<ResourceMapperFields> {
 				return buildMapperFields.call(this, 'update');
+			},
+
+			async getJunctionFields(
+				this: ILoadOptionsFunctions,
+			): Promise<ResourceMapperFields> {
+				return buildJunctionMapperFields.call(this);
 			},
 		},
 };

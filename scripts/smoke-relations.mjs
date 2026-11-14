@@ -190,13 +190,11 @@ async function main() {
 			`write-schema marks ${f.name} as through (node correctly omits it when storage=through)`,
 		);
 	}
-	findings.missing.push({
-		prio: 'P0',
-		id: 'nm-link',
-		title: 'N:M through not writable from the node (nor public REST link_records)',
-		detail:
-			'Fields argomenti_tag / argomenti_livello: write_note link_records MCP. Node omits through; no link/unlink op.',
-	});
+	if (throughFields.length > 0) {
+		findings.ok.push(
+			'N:M fields are written with Link / Unlink Records (one junction row per link), see smoke-extended',
+		);
+	}
 
 	// --- fixtures sede / docente ---
 	const sedeId = await ensureFixture(IDS.sede, 'default', 'nome', {

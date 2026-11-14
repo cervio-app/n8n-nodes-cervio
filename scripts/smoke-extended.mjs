@@ -219,32 +219,26 @@ async function main() {
 			assert(argomento.json.id, 'far entity create id');
 			cleanup.push([ARGOMENTO_ID, argomento.json.id]);
 
-			const linked = await api(
-				'POST',
-				`/api/v1/entities/${CORSO_ID}/forms/default/fields/${encodeURIComponent(THROUGH_FIELD)}/links`,
-				{
-					from_record_id: corso.json.id,
-					far_record_id: argomento.json.id,
-				},
-			);
-			assert(linked.json.junction_record_id, 'link junction_record_id');
-			console.log('linkRecords:', linked.json.junction_record_id);
+			// A link is one junction row: linking the same pair twice adds a second row.
+			const linksPath = `/api/v1/entities/${CORSO_ID}/forms/default/fields/${encodeURIComponent(THROUGH_FIELD)}/links`;
+			const link = () =>
+				api('POST', linksPath, { from_record_id: corso.json.id, far_record_id: argomento.json.id });
+			const unlink = (rowId) =>
+				api('DELETE', linksPath, { from_record_id: corso.json.id, junction_record_id: rowId });
 
-			const unlinked = await api(
-				'DELETE',
-				`/api/v1/entities/${CORSO_ID}/forms/default/fields/${encodeURIComponent(THROUGH_FIELD)}/links`,
-				{
-					from_record_id: corso.json.id,
-					far_record_id: argomento.json.id,
-				},
+			const first = await link();
+			const second = await link();
+			assert(first.json.junction_record_id, 'link junction_record_id');
+			assert(
+				second.json.junction_record_id && second.json.junction_record_id !== first.json.junction_record_id,
+				'linking the same pair again creates another row',
 			);
-			if (unlinked.json.deleted >= 1) {
-				console.log('unlinkRecords: deleted', unlinked.json.deleted);
-			} else {
-				console.log(
-					'WARN unlinkRecords: deleted=0 under PAT — check junction ACL / listJunctionRowsForNear on the tenant.',
-				);
-			}
+			console.log('linkRecords:', first.json.junction_record_id, second.json.junction_record_id);
+
+			assert((await unlink(first.json.junction_record_id)).json.deleted === 1, 'unlink by row id');
+			assert((await unlink(first.json.junction_record_id)).json.deleted === 0, 'unlink again is a no-op');
+			assert((await unlink(second.json.junction_record_id)).json.deleted === 1, 'other row kept, then removed');
+			console.log('unlinkRecords: by row id OK');
 		} else {
 			console.log(
 				'link/unlink: SKIP (set CERVIO_SMOKE_CORSO_ID, CERVIO_SMOKE_ARGOMENTO_ID, CERVIO_SMOKE_THROUGH_FIELD)',

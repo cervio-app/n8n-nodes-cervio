@@ -101,7 +101,7 @@ Pick a **Resource**, then an **Operation** (node **typeVersion 2** only):
 | | List | Admin entity list with `filter[field]=eq.value` |
 | **Relation** | Search | Browse/search relation candidates (`q`, limit ≤ 100) |
 | | Resolve Key | Match scalar keys → record UUIDs |
-| | Link / Unlink | N:M through-field links |
+| | Link / Unlink | Add or remove one N:M link row (see [N:M links](#nm-links)) |
 | **Document** | List / Upload / Open | Metadata, multipart upload, signed URL |
 | | Generate from Template | Render a mapped document template (admin) |
 | **Workflow** | Start / Get Run Status | Manual start + admin run status |
@@ -111,10 +111,24 @@ Pick a **Resource**, then an **Operation** (node **typeVersion 2** only):
 **Notes**
 
 - **Create / Update / Upsert / Validate:** pick **Entity → Form**, then the resource mapper.
-- N:M **through** fields are not on the mapper — use **Link / Unlink**.
+- N:M fields are not on the mapper — use **Link / Unlink** ([N:M links](#nm-links)).
+- Every operation runs **once per input item**, with that item's parameters (List, List view and Search included). To run a list once for many items, turn on the node setting **Execute Once**.
 - Relation dropdowns are capped (~50); use **Search relation** for larger sets.
 - List view defaults: options = slugs, relations = UUIDs (ready for Update).
 - **Start workflow → Additional Data:** Key/Value rows **or** a JSON object (same `data` body Cervio accepts on `POST /api/v1/workflows/:id/runs`, max 64 KiB → `$trigger.data`).
+
+## N:M links
+
+In Cervio an N:M field is stored in a junction entity, and **each link is one row** of it, with its own ID and optionally its own fields (e.g. year, hours). The same far record can be linked more than once (one row per year, for example); only a uniqueness rule on the junction entity can forbid it.
+
+| Operation | Input | Output |
+|-----------|-------|--------|
+| **Link Records** | Record ID, N:M field, Far Record ID, optional **Junction Fields** | `{ junction_record_id, record_id, far_record_id, data? }` |
+| **Unlink Records** | Record ID, N:M field, **Junction Record ID** | `{ deleted, junction_record_id, record_id }` |
+
+- **Junction Fields** lists the junction entity's create form, without the two record keys (Cervio sets them). Required junction fields must be filled, or Cervio answers `missing_required_fields`.
+- **Unlink** removes exactly one row. Use the `junction_record_id` returned by Link, or list the junction entity (**Record → List** filtered on the record key) to find the row. `deleted: 0` means the row was already removed or belongs to another record, so a retry is safe.
+- Removing "every link to record X" is a loop: list the junction rows for X, then Unlink each.
 
 ## Permissions
 
