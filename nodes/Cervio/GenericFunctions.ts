@@ -138,10 +138,7 @@ export async function listEntities(this: CervioContext): Promise<CervioEntity[]>
 	return res.entities ?? [];
 }
 
-export async function listForms(
-	this: CervioContext,
-	entityId: string,
-): Promise<CervioForm[]> {
+export async function listForms(this: CervioContext, entityId: string): Promise<CervioForm[]> {
 	const res = (await cervioApiRequest.call(
 		this,
 		'GET',
@@ -150,10 +147,7 @@ export async function listForms(
 	return res.forms ?? [];
 }
 
-export async function listViews(
-	this: CervioContext,
-	entityId: string,
-): Promise<CervioView[]> {
+export async function listViews(this: CervioContext, entityId: string): Promise<CervioView[]> {
 	const res = (await cervioApiRequest.call(
 		this,
 		'GET',
@@ -257,10 +251,7 @@ export async function listViewRecords(
 	)) as CervioListPage;
 }
 
-export async function countViewRecords(
-	this: CervioContext,
-	viewId: string,
-): Promise<number> {
+export async function countViewRecords(this: CervioContext, viewId: string): Promise<number> {
 	const res = (await cervioApiRequest.call(
 		this,
 		'GET',
@@ -488,7 +479,12 @@ export async function resolveNaturalKeys(
 ): Promise<unknown> {
 	const body: IDataObject = { match_field: matchField, values };
 	if (fieldName) body.field_name = fieldName;
-	return cervioApiRequest.call(this, 'POST', `/api/v1/entities/${idSegment(entityId, 'Entity ID')}/resolve`, body);
+	return cervioApiRequest.call(
+		this,
+		'POST',
+		`/api/v1/entities/${idSegment(entityId, 'Entity ID')}/resolve`,
+		body,
+	);
 }
 
 export async function startWorkflowRun(

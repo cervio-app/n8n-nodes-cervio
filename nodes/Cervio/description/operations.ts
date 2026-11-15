@@ -98,8 +98,7 @@ export const operationPropertiesByResource: INodeProperties[] = [
 			{
 				name: 'Search',
 				value: 'searchRelation',
-				description:
-					'List/search candidates for a relation field (relation-options, up to 100)',
+				description: 'List/search candidates for a relation field (relation-options, up to 100)',
 				action: 'Search relation candidates',
 			},
 			{
@@ -199,8 +198,7 @@ export const operationPropertiesByResource: INodeProperties[] = [
 			{
 				name: 'Notify Users',
 				value: 'notifyUsers',
-				description:
-					'Notify up to 50 organization members (admin; POST /api/v1/notifications)',
+				description: 'Notify up to 50 organization members (admin; POST /api/v1/notifications)',
 				action: 'Notify organization users',
 			},
 		],

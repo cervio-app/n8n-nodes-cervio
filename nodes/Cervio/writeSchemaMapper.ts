@@ -81,9 +81,7 @@ export function isWritableMapperField(field: WriteDiscoveryField): boolean {
 	return true;
 }
 
-export function mapValueShapeToMapperType(
-	field: WriteDiscoveryField,
-): MapperFieldType {
+export function mapValueShapeToMapperType(field: WriteDiscoveryField): MapperFieldType {
 	if (field.input.mode === 'fixed_list') return 'options';
 	if (field.input.mode === 'boolean' || field.value_shape === 'boolean') {
 		return 'boolean';
@@ -154,8 +152,7 @@ export function writeSchemaToMapperFields(
 			display: true,
 			type,
 			options,
-			description:
-				descriptionParts.length > 0 ? descriptionParts.join(' ') : undefined,
+			description: descriptionParts.length > 0 ? descriptionParts.join(' ') : undefined,
 		};
 	});
 }
@@ -172,7 +169,12 @@ export function withoutRelationsTo(
 	return {
 		...schema,
 		fields: schema.fields.filter(
-			(f) => !(f.input.mode === 'relation' && f.input.relation_entity_id && skip.has(f.input.relation_entity_id)),
+			(f) =>
+				!(
+					f.input.mode === 'relation' &&
+					f.input.relation_entity_id &&
+					skip.has(f.input.relation_entity_id)
+				),
 		),
 	};
 }

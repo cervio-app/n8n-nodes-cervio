@@ -12,10 +12,7 @@ vi.mock('../GenericFunctions', async (importOriginal) => {
 import { createRecord } from '../GenericFunctions';
 import { executeCervio } from '../execute';
 
-function mockExecute(
-	params: Record<string, unknown>,
-	opts?: { typeVersion?: number },
-) {
+function mockExecute(params: Record<string, unknown>, opts?: { typeVersion?: number }) {
 	const ctx = {
 		getInputData: () => [{ json: {} }],
 		getNodeParameter: (name: string, _i?: number, fallback?: unknown) => {

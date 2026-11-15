@@ -50,10 +50,7 @@ export function readMappedFieldData(
 	items: INodeExecutionData[],
 	itemIndex: number,
 ): IDataObject {
-	const mappingMode = ctx.getNodeParameter(
-		'fields.mappingMode',
-		itemIndex,
-	) as string;
+	const mappingMode = ctx.getNodeParameter('fields.mappingMode', itemIndex) as string;
 	let rawFields: IDataObject = {};
 	if (mappingMode === 'defineBelow') {
 		rawFields = ctx.getNodeParameter('fields.value', itemIndex, {}) as IDataObject;
@@ -77,29 +74,17 @@ export function parseResolveValues(
 ): string[] {
 	const trimmed = (raw ?? '').trim();
 	if (!trimmed) {
-		throw new NodeOperationError(
-			ctx.getNode(),
-			'Values to resolve are required.',
-			{ itemIndex },
-		);
+		throw new NodeOperationError(ctx.getNode(), 'Values to resolve are required.', { itemIndex });
 	}
 	if (trimmed.startsWith('[')) {
 		let parsed: unknown;
 		try {
 			parsed = JSON.parse(trimmed) as unknown;
 		} catch {
-			throw new NodeOperationError(
-				ctx.getNode(),
-				'Invalid values JSON.',
-				{ itemIndex },
-			);
+			throw new NodeOperationError(ctx.getNode(), 'Invalid values JSON.', { itemIndex });
 		}
 		if (!Array.isArray(parsed)) {
-			throw new NodeOperationError(
-				ctx.getNode(),
-				'Values JSON must be an array.',
-				{ itemIndex },
-			);
+			throw new NodeOperationError(ctx.getNode(), 'Values JSON must be an array.', { itemIndex });
 		}
 		return parsed.map((v) => String(v).trim()).filter(Boolean);
 	}
@@ -117,7 +102,9 @@ export async function buildMapperFields(
 	const formName = this.getNodeParameter('formName') as string;
 	if (!entityId || !formName) return { fields: [] };
 	const schema = (await getWriteSchema.call(this, entityId, formName)) as WriteDiscoverySchema;
-	return { fields: await mapperFieldsWithRelationOptions.call(this, entityId, formName, schema, mode) };
+	return {
+		fields: await mapperFieldsWithRelationOptions.call(this, entityId, formName, schema, mode),
+	};
 }
 
 /**
@@ -266,11 +253,9 @@ function parseJsonObjectPayload(
 	}
 
 	if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
-		throw new NodeOperationError(
-			ctx.getNode(),
-			'Additional Data must be a JSON object.',
-			{ itemIndex },
-		);
+		throw new NodeOperationError(ctx.getNode(), 'Additional Data must be a JSON object.', {
+			itemIndex,
+		});
 	}
 	const obj = parsed as IDataObject;
 	if (Object.keys(obj).length === 0) return undefined;
@@ -303,11 +288,7 @@ export function parseWorkflowDataPayload(
 	}
 
 	const valuesRaw = obj.values;
-	const list = Array.isArray(valuesRaw)
-		? valuesRaw
-		: valuesRaw
-			? [valuesRaw]
-			: [];
+	const list = Array.isArray(valuesRaw) ? valuesRaw : valuesRaw ? [valuesRaw] : [];
 
 	const out: IDataObject = {};
 	for (const row of list) {
@@ -315,16 +296,12 @@ export function parseWorkflowDataPayload(
 		const name = String((row as { name?: unknown }).name ?? '').trim();
 		const value = (row as { value?: unknown }).value;
 		const hasValue =
-			value !== undefined &&
-			value !== '' &&
-			!(typeof value === 'string' && !value.trim());
+			value !== undefined && value !== '' && !(typeof value === 'string' && !value.trim());
 		if (!name) {
 			if (hasValue) {
-				throw new NodeOperationError(
-					ctx.getNode(),
-					'Each Additional Data row must have a name.',
-					{ itemIndex },
-				);
+				throw new NodeOperationError(ctx.getNode(), 'Each Additional Data row must have a name.', {
+					itemIndex,
+				});
 			}
 			continue;
 		}
@@ -341,8 +318,8 @@ export function resolveWorkflowStartData(
 	ctx: IExecuteFunctions,
 	itemIndex: number,
 ): IDataObject | undefined {
-	const mode = (ctx.getNodeParameter('workflowDataMode', itemIndex, 'keyValue') as string) ||
-		'keyValue';
+	const mode =
+		(ctx.getNodeParameter('workflowDataMode', itemIndex, 'keyValue') as string) || 'keyValue';
 	if (mode === 'json') {
 		const raw = ctx.getNodeParameter('workflowDataJson', itemIndex, {});
 		return parseJsonObjectPayload(ctx, raw, itemIndex);
@@ -369,4 +346,3 @@ export function parseMultiValueModes(
 	}
 	return Object.keys(out).length > 0 ? out : undefined;
 }
-

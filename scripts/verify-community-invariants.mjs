@@ -30,9 +30,7 @@ Module._cache['n8n-workflow-stub'] = {
 	exports: stub,
 };
 
-const { cervioProperties } = require(
-	join(root, 'dist/nodes/Cervio/description/index.js'),
-);
+const { cervioProperties } = require(join(root, 'dist/nodes/Cervio/description/index.js'));
 
 function fail(msg) {
 	console.error(`INVARIANT FAIL: ${msg}`);

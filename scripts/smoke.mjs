@@ -43,9 +43,7 @@ async function api(method, path, body) {
 		json = { raw: text };
 	}
 	if (!res.ok) {
-		const err = new Error(
-			`${method} ${path} → ${res.status}: ${JSON.stringify(json)}`,
-		);
+		const err = new Error(`${method} ${path} → ${res.status}: ${JSON.stringify(json)}`);
 		err.status = res.status;
 		err.body = json;
 		throw err;
@@ -121,10 +119,7 @@ async function main() {
 	const view = (views.views || []).find((v) => v.name === 'default');
 	assert(view?.id, 'view default missing');
 
-	const schema = await api(
-		'GET',
-		`/api/v1/entities/${ENTITY_ID}/forms/default/write-schema`,
-	);
+	const schema = await api('GET', `/api/v1/entities/${ENTITY_ID}/forms/default/write-schema`);
 	assert(
 		(schema.fields || []).some((f) => f.name === 'stato'),
 		'write-schema missing stato',
@@ -161,14 +156,9 @@ async function main() {
 		}),
 	);
 	assert((firstPage.records || []).length === 1, 'first page should return 1 row');
-	assert(
-		firstPage.page?.has_more === true,
-		'expected page.has_more=true with limit=1 and ≥3 rows',
-	);
+	assert(firstPage.page?.has_more === true, 'expected page.has_more=true with limit=1 and ≥3 rows');
 	assert(firstPage.page?.next_cursor, 'expected page.next_cursor for page 2');
-	console.log(
-		`  page 1: id=${firstPage.records[0].id}, has_more=true, next_cursor=yes`,
-	);
+	console.log(`  page 1: id=${firstPage.records[0].id}, has_more=true, next_cursor=yes`);
 
 	const secondPage = await api(
 		'GET',
@@ -180,10 +170,7 @@ async function main() {
 		}),
 	);
 	assert((secondPage.records || []).length === 1, 'second page should return 1 row');
-	assert(
-		secondPage.records[0].id !== firstPage.records[0].id,
-		'page 2 must not repeat page 1 id',
-	);
+	assert(secondPage.records[0].id !== firstPage.records[0].id, 'page 2 must not repeat page 1 id');
 	console.log(
 		`  page 2: id=${secondPage.records[0].id}, has_more=${Boolean(secondPage.page?.has_more)}`,
 	);
@@ -197,9 +184,7 @@ async function main() {
 			`created record ${id} missing from all-pages gather`,
 		);
 	}
-	console.log(
-		`  gathered ${allPages.records.length} row(s) across ${allPages.pages} page(s)`,
-	);
+	console.log(`  gathered ${allPages.records.length} row(s) across ${allPages.pages} page(s)`);
 
 	const primaryId = createdIds[0];
 	const primaryNome = nomes[0];
@@ -209,10 +194,7 @@ async function main() {
 		data: { stato: 'Completato' },
 	});
 
-	const after = await api(
-		'GET',
-		`/api/v1/entities/${ENTITY_ID}/records/${primaryId}`,
-	);
+	const after = await api('GET', `/api/v1/entities/${ENTITY_ID}/records/${primaryId}`);
 	const data = after.record?.data ?? after.data ?? after;
 	assert(
 		data.stato === 'Completato' || data.stato?.id === 'Completato',

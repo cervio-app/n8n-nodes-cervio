@@ -12,10 +12,12 @@ import {
 	unlinkThroughRecord,
 } from '../GenericFunctions';
 
-function mockCtx(overrides: {
-	baseUrl?: string;
-	http?: ReturnType<typeof vi.fn>;
-} = {}) {
+function mockCtx(
+	overrides: {
+		baseUrl?: string;
+		http?: ReturnType<typeof vi.fn>;
+	} = {},
+) {
 	const http = overrides.http ?? vi.fn(async () => ({ ok: true }));
 	return {
 		getCredentials: vi.fn(async () => ({
@@ -39,11 +41,7 @@ describe('cervioApiRequest', () => {
 		const ctx = mockCtx({
 			http: vi.fn(async () => ({ entities: [] })),
 		});
-		const res = await cervioApiRequest.call(
-			ctx as never,
-			'GET',
-			'/api/v1/entities',
-		);
+		const res = await cervioApiRequest.call(ctx as never, 'GET', '/api/v1/entities');
 		expect(res).toEqual({ entities: [] });
 		expect(ctx._http).toHaveBeenCalledWith(
 			'cervioApi',
@@ -61,9 +59,9 @@ describe('cervioApiRequest', () => {
 				throw { status: 401, message: 'unauthorized' };
 			}),
 		});
-		await expect(
-			cervioApiRequest.call(ctx as never, 'GET', '/api/v1/me'),
-		).rejects.toBeInstanceOf(NodeApiError);
+		await expect(cervioApiRequest.call(ctx as never, 'GET', '/api/v1/me')).rejects.toBeInstanceOf(
+			NodeApiError,
+		);
 	});
 
 	it('uses the Cervio error message instead of the generic HTTP text', async () => {
@@ -73,19 +71,26 @@ describe('cervioApiRequest', () => {
 					message: 'Request failed with status code 400',
 					response: {
 						status: 400,
-						data: { error: 'missing_required_fields', message: 'Missing required junction fields: anno' },
+						data: {
+							error: 'missing_required_fields',
+							message: 'Missing required junction fields: anno',
+						},
 					},
 				};
 			}),
 		});
-		const error = await cervioApiRequest.call(ctx as never, 'POST', '/x', {}).catch((e: unknown) => e);
+		const error = await cervioApiRequest
+			.call(ctx as never, 'POST', '/x', {})
+			.catch((e: unknown) => e);
 		expect(error).toBeInstanceOf(NodeApiError);
 		expect((error as NodeApiError).message).toBe('Missing required junction fields: anno');
 		expect((error as NodeApiError).httpCode).toBe('400');
 	});
 
 	it('falls back to the error code, then to n8n’s own message', () => {
-		expect(cervioErrorMessage({ response: { data: { error: 'edit_lock_held' } } })).toBe('edit_lock_held');
+		expect(cervioErrorMessage({ response: { data: { error: 'edit_lock_held' } } })).toBe(
+			'edit_lock_held',
+		);
 		expect(cervioErrorMessage({ cause: { response: { data: { message: 'x' } } } })).toBe('x');
 		expect(cervioErrorMessage({ response: { data: 'oops' } })).toBeUndefined();
 		expect(cervioErrorMessage(null)).toBeUndefined();
@@ -93,9 +98,9 @@ describe('cervioApiRequest', () => {
 
 	it('rejects metadata base URLs before calling HTTP', async () => {
 		const ctx = mockCtx({ baseUrl: 'http://169.254.169.254' });
-		await expect(
-			cervioApiRequest.call(ctx as never, 'GET', '/api/v1/me'),
-		).rejects.toBeInstanceOf(NodeApiError);
+		await expect(cervioApiRequest.call(ctx as never, 'GET', '/api/v1/me')).rejects.toBeInstanceOf(
+			NodeApiError,
+		);
 		expect(ctx._http).not.toHaveBeenCalled();
 	});
 });
@@ -120,7 +125,9 @@ describe('record helpers', () => {
 			`https://acme.cervio.app/api/v1/entities/${ENTITY}/records/${RECORD}`,
 		);
 		expect(http.mock.calls[1][1].method).toBe('POST');
-		expect(http.mock.calls[1][1].url).toBe(`https://acme.cervio.app/api/v1/entities/${ENTITY}/records`);
+		expect(http.mock.calls[1][1].url).toBe(
+			`https://acme.cervio.app/api/v1/entities/${ENTITY}/records`,
+		);
 		expect(http.mock.calls[1][1].body).toMatchObject({
 			form_name: 'default',
 			data: { nome: 'Ada' },
@@ -149,9 +156,17 @@ describe('N:M links', () => {
 	it('Link creates one junction row with its fields', async () => {
 		const http = vi.fn(async () => ({ junction_record_id: ROW }));
 		const ctx = mockCtx({ http });
-		const res = await linkThroughRecords.call(ctx as never, ENTITY, 'my form', 'progetti', RECORD, FAR, {
-			anno: 2026,
-		});
+		const res = await linkThroughRecords.call(
+			ctx as never,
+			ENTITY,
+			'my form',
+			'progetti',
+			RECORD,
+			FAR,
+			{
+				anno: 2026,
+			},
+		);
 		expect(res).toEqual({ junction_record_id: ROW });
 		expect(http).toHaveBeenCalledWith(
 			'cervioApi',
@@ -165,13 +180,28 @@ describe('N:M links', () => {
 
 	it('Link omits data when there are no junction fields', async () => {
 		const http = vi.fn(async () => ({ junction_record_id: ROW }));
-		await linkThroughRecords.call(mockCtx({ http }) as never, ENTITY, 'my form', 'progetti', RECORD, FAR, {});
+		await linkThroughRecords.call(
+			mockCtx({ http }) as never,
+			ENTITY,
+			'my form',
+			'progetti',
+			RECORD,
+			FAR,
+			{},
+		);
 		expect(http.mock.calls[0][1].body).toEqual({ from_record_id: RECORD, far_record_id: FAR });
 	});
 
 	it('Unlink removes one junction row by id', async () => {
 		const http = vi.fn(async () => ({ deleted: 1 }));
-		const res = await unlinkThroughRecord.call(mockCtx({ http }) as never, ENTITY, 'my form', 'progetti', RECORD, ROW);
+		const res = await unlinkThroughRecord.call(
+			mockCtx({ http }) as never,
+			ENTITY,
+			'my form',
+			'progetti',
+			RECORD,
+			ROW,
+		);
 		expect(res).toEqual({ deleted: 1 });
 		expect(http).toHaveBeenCalledWith(
 			'cervioApi',
@@ -195,7 +225,12 @@ describe('N:M links', () => {
 describe('multipart', () => {
 	it('parses a JSON string response', async () => {
 		const http = vi.fn(async () => '{"id":"d1"}');
-		const res = await cervioApiRequestMultipart.call(mockCtx({ http }) as never, 'POST', '/x', new FormData());
+		const res = await cervioApiRequestMultipart.call(
+			mockCtx({ http }) as never,
+			'POST',
+			'/x',
+			new FormData(),
+		);
 		expect(res).toEqual({ id: 'd1' });
 		expect(http.mock.calls[0][1]).toMatchObject({ json: false, url: 'https://acme.cervio.app/x' });
 	});

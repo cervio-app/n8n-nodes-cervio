@@ -67,9 +67,7 @@ const ALL_OPERATIONS = [
 ];
 
 const opProps = node.description.properties.filter((p) => p.name === 'operation');
-const values = [
-	...new Set(opProps.flatMap((p) => (p.options || []).map((o) => o.value))),
-];
+const values = [...new Set(opProps.flatMap((p) => (p.options || []).map((o) => o.value)))];
 for (const need of ALL_OPERATIONS) {
 	if (!values.includes(need)) throw new Error(`missing operation ${need}`);
 }
@@ -95,13 +93,9 @@ for (const block of opProps) {
 
 const mappers = node.description.properties.filter((p) => p.type === 'resourceMapper');
 if (mappers.length < 3) {
-	throw new Error(
-		'expected resourceMapper for create, update, and validateDraft/upsert',
-	);
+	throw new Error('expected resourceMapper for create, update, and validateDraft/upsert');
 }
-const mapperOps = new Set(
-	mappers.flatMap((p) => p.displayOptions?.show?.operation ?? []),
-);
+const mapperOps = new Set(mappers.flatMap((p) => p.displayOptions?.show?.operation ?? []));
 for (const need of ['create', 'update', 'validateDraft', 'upsert']) {
 	if (!mapperOps.has(need)) {
 		throw new Error(`resourceMapper missing operation ${need}`);

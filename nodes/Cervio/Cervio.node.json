@@ -1,13 +1,13 @@
 {
-  "node": "@cervio/n8n-nodes-cervio.cervio",
-  "nodeVersion": "1.0",
-  "codexVersion": "1.0",
-  "categories": ["Data & Storage"],
-  "resources": {
-    "primaryDocumentation": [
-      {
-        "url": "https://github.com/cervio-app/n8n-nodes-cervio#installation"
-      }
-    ]
-  }
+	"node": "@cervio/n8n-nodes-cervio.cervio",
+	"nodeVersion": "1.0",
+	"codexVersion": "1.0",
+	"categories": ["Data & Storage"],
+	"resources": {
+		"primaryDocumentation": [
+			{
+				"url": "https://github.com/cervio-app/n8n-nodes-cervio#installation"
+			}
+		]
+	}
 }

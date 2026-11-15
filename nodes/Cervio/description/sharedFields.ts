@@ -603,7 +603,8 @@ export const sharedFields: INodeProperties[] = [
 				],
 			},
 		],
-		description: 'Recipients in this organization (max 50). Outside-org IDs are ignored by the API.',
+		description:
+			'Recipients in this organization (max 50). Outside-org IDs are ignored by the API.',
 	},
 	{
 		displayName: 'Fields',
@@ -714,8 +715,7 @@ export const sharedFields: INodeProperties[] = [
 				name: 'expectedUpdatedAt',
 				type: 'string',
 				default: '',
-				description:
-					'If someone else changed the record, Cervio returns 409. Usually leave empty.',
+				description: 'If someone else changed the record, Cervio returns 409. Usually leave empty.',
 			},
 			{
 				displayName: 'Multi-Value Mode',

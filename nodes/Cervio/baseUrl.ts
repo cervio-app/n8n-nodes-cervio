@@ -26,15 +26,11 @@ export function assertSafeCervioBaseUrl(raw: string): string {
 	try {
 		url = new URL(normalized);
 	} catch {
-		throw new Error(
-			`Cervio Base URL is not a valid absolute URL: ${JSON.stringify(raw)}`,
-		);
+		throw new Error(`Cervio Base URL is not a valid absolute URL: ${JSON.stringify(raw)}`);
 	}
 
 	if (url.protocol !== 'https:' && url.protocol !== 'http:') {
-		throw new Error(
-			`Cervio Base URL must use http or https (got ${url.protocol})`,
-		);
+		throw new Error(`Cervio Base URL must use http or https (got ${url.protocol})`);
 	}
 
 	if (url.username || url.password) {
