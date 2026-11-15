@@ -83,9 +83,7 @@ async function api(method, path, body, { allowFail = false } = {}) {
 		json = { raw: text };
 	}
 	if (!res.ok) {
-		const err = new Error(
-			`${method} ${path} → ${res.status}: ${JSON.stringify(json)}`,
-		);
+		const err = new Error(`${method} ${path} → ${res.status}: ${JSON.stringify(json)}`);
 		err.status = res.status;
 		err.body = json;
 		if (allowFail) return { ok: false, status: res.status, body: json };
@@ -110,19 +108,13 @@ async function defaultViewId(entityId) {
 }
 
 async function listEntityRecords(entityId, { limit = 50 } = {}) {
-	const res = await api(
-		'GET',
-		`/api/v1/entities/${entityId}/records?limit=${limit}`,
-	);
+	const res = await api('GET', `/api/v1/entities/${entityId}/records?limit=${limit}`);
 	return res.records || res.data || [];
 }
 
 async function countApprox(entityId) {
 	try {
-		const res = await api(
-			'GET',
-			`/api/v1/entities/${entityId}/records/count`,
-		);
+		const res = await api('GET', `/api/v1/entities/${entityId}/records/count`);
 		if (typeof res.count === 'number') return res.count;
 	} catch {
 		/* fall through */
@@ -160,10 +152,7 @@ async function main() {
 	log('me', `${me.email || '(pat)'} org=${me.organization_id}`);
 
 	// --- write-schema mapper surface ---
-	const schema = await api(
-		'GET',
-		`/api/v1/entities/${IDS.corso}/forms/default/write-schema`,
-	);
+	const schema = await api('GET', `/api/v1/entities/${IDS.corso}/forms/default/write-schema`);
 	const fields = schema.fields || [];
 	const byName = {};
 	for (const f of fields) {
@@ -190,13 +179,11 @@ async function main() {
 			`write-schema marks ${f.name} as through (node correctly omits it when storage=through)`,
 		);
 	}
-	findings.missing.push({
-		prio: 'P0',
-		id: 'nm-link',
-		title: 'N:M through not writable from the node (nor public REST link_records)',
-		detail:
-			'Fields argomenti_tag / argomenti_livello: write_note link_records MCP. Node omits through; no link/unlink op.',
-	});
+	if (throughFields.length > 0) {
+		findings.ok.push(
+			'N:M fields are written with Link / Unlink Records (one junction row per link), see smoke-extended',
+		);
+	}
 
 	// --- fixtures sede / docente ---
 	const sedeId = await ensureFixture(IDS.sede, 'default', 'nome', {
@@ -209,12 +196,7 @@ async function main() {
 	});
 	log('fixture', `sede=${sedeId} tutor=${tutorId}`);
 
-	const optsSede = await relationOptions(
-		IDS.corso,
-		'default',
-		'sede_id',
-		DROPDOWN_PROBE_LIMIT,
-	);
+	const optsSede = await relationOptions(IDS.corso, 'default', 'sede_id', DROPDOWN_PROBE_LIMIT);
 	const sedeOpts = optsSede.records || [];
 	log('relation-options', `sede_id → ${sedeOpts.length} (limit ${DROPDOWN_PROBE_LIMIT})`);
 	if (sedeOpts.length > 0 && sedeOpts.length < 50) {
@@ -239,19 +221,15 @@ async function main() {
 	findings.ok.push('Create Corso with sede_id (N:1) + tutor_id (1:1) OK');
 
 	// --- create lezione 1:N child ---
-	const lezione = await api(
-		'POST',
-		`/api/v1/entities/${IDS.lezione}/records`,
-		{
-			form_name: 'default',
-			data: {
-				titolo: `Lezione n8n ${stamp}`,
-				data: '2026-11-05',
-				ore: 2,
-				corso_id: corso.id,
-			},
+	const lezione = await api('POST', `/api/v1/entities/${IDS.lezione}/records`, {
+		form_name: 'default',
+		data: {
+			titolo: `Lezione n8n ${stamp}`,
+			data: '2026-11-05',
+			ore: 2,
+			corso_id: corso.id,
 		},
-	);
+	});
 	assert(lezione.id, 'lezione create no id');
 	log('create-lezione', lezione.id);
 	findings.ok.push(
@@ -274,15 +252,9 @@ async function main() {
 			form_name: 'default',
 			data: { tutor_id: tid },
 		});
-		const after = await api(
-			'GET',
-			`/api/v1/entities/${IDS.corso}/records/${corso.id}`,
-		);
+		const after = await api('GET', `/api/v1/entities/${IDS.corso}/records/${corso.id}`);
 		const data = after.record?.data ?? after.data ?? after;
-		const got =
-			typeof data.tutor_id === 'string'
-				? data.tutor_id
-				: data.tutor_id?.id;
+		const got = typeof data.tutor_id === 'string' ? data.tutor_id : data.tutor_id?.id;
 		assert(got === tid, `tutor not updated: ${JSON.stringify(data.tutor_id)}`);
 		findings.ok.push('Partial PATCH tutor_id (merge) OK');
 	}
@@ -304,10 +276,7 @@ async function main() {
 			: `rejected ${nmTry.status}: ${JSON.stringify(nmTry.body).slice(0, 180)}`,
 	);
 	if (nmTry.ok) {
-		const afterNm = await api(
-			'GET',
-			`/api/v1/entities/${IDS.corso}/records/${corso.id}`,
-		);
+		const afterNm = await api('GET', `/api/v1/entities/${IDS.corso}/records/${corso.id}`);
 		const dNm = afterNm.record?.data ?? afterNm.data ?? afterNm;
 		const tagVal = dNm.argomenti_tag;
 		log('nm-verify', `argomenti_tag after PATCH=${JSON.stringify(tagVal)}`);
@@ -339,8 +308,7 @@ async function main() {
 		prio: 'P1',
 		id: 'view-columns-only',
 		title: 'List view exposes only view columns, not every form field',
-		detail:
-			`Near-entity default view shows (${corsoKeys.join(', ') || 'empty'}): parent_fk may be absent. Guided Update needs a view with parent_fk or GET record (not in the node).`,
+		detail: `Near-entity default view shows (${corsoKeys.join(', ') || 'empty'}): parent_fk may be absent. Guided Update needs a view with parent_fk or GET record (not in the node).`,
 	});
 
 	// Optional: options=both → {id,label} round-trip probe (same entity as smoke.mjs)
@@ -369,8 +337,7 @@ async function main() {
 			findings.opts.push({
 				prio: 'P0',
 				id: 'list-both-roundtrip',
-				title:
-					'Default options/relations=both → objects do not round-trip for Update',
+				title: 'Default options/relations=both → objects do not round-trip for Update',
 				detail: `stato both=${JSON.stringify(statoBoth)}; PATCH object → ${badStato.ok ? 'accepted' : badStato.status}. Quick win: default listView options=slugs + relations=uuids, or coerce .id on update.`,
 			});
 			const goodStato = await api(
@@ -384,10 +351,7 @@ async function main() {
 			}
 		}
 	} else {
-		log(
-			'list-options-probe',
-			'SKIP (set CERVIO_SMOKE_ENTITY_ID for options=both round-trip)',
-		);
+		log('list-options-probe', 'SKIP (set CERVIO_SMOKE_ENTITY_ID for options=both round-trip)');
 	}
 
 	// --- Order / line (parent_fk + child) ---
@@ -395,18 +359,14 @@ async function main() {
 		codice: `n8n-cli-${stamp}`,
 		nome: `Cliente n8n ${stamp}`,
 	});
-	const ordine = await api(
-		'POST',
-		`/api/v1/entities/${IDS.ordine}/records`,
-		{
-			form_name: 'default',
-			data: {
-				codice: `ORD-${stamp}`,
-				titolo: `Ordine n8n ${stamp}`,
-				cliente_id: clienteId,
-			},
+	const ordine = await api('POST', `/api/v1/entities/${IDS.ordine}/records`, {
+		form_name: 'default',
+		data: {
+			codice: `ORD-${stamp}`,
+			titolo: `Ordine n8n ${stamp}`,
+			cliente_id: clienteId,
 		},
-	);
+	});
 	assert(ordine.id, 'ordine create failed');
 	const riga = await api('POST', `/api/v1/entities/${IDS.riga}/records`, {
 		form_name: 'default',
@@ -418,9 +378,7 @@ async function main() {
 	});
 	assert(riga.id, 'riga create failed');
 	log('man-rel', `ordine=${ordine.id} riga=${riga.id}`);
-	findings.ok.push(
-		'Order: link cliente_id + child riga with ordine_id OK',
-	);
+	findings.ok.push('Order: link cliente_id + child riga with ordine_id OK');
 
 	// --- multi_select parent_fk ---
 	const bus = await listEntityRecords(IDS.businessUnit, { limit: 1 });
@@ -432,19 +390,15 @@ async function main() {
 		.slice(0, 2);
 	assert(busId && cIds.length >= 1, 'need business unit + contributor');
 
-	const eng = await api(
-		'POST',
-		`/api/v1/entities/${IDS.engProject}/records`,
-		{
-			form_name: 'default',
-			data: {
-				project_name: `n8n-multi-${stamp}`,
-				business_unit: busId,
-				document_controllers: cIds,
-				project_status: 'OPEN',
-			},
+	const eng = await api('POST', `/api/v1/entities/${IDS.engProject}/records`, {
+		form_name: 'default',
+		data: {
+			project_name: `n8n-multi-${stamp}`,
+			business_unit: busId,
+			document_controllers: cIds,
+			project_status: 'OPEN',
 		},
-	);
+	});
 	assert(eng.id, 'eng project create failed');
 	log('eng-create', `${eng.id} controllers=${cIds.join(',')}`);
 	findings.ok.push(
@@ -476,13 +430,8 @@ async function main() {
 				'Eng Projects default uses lookup document_controllers_display_name (names). List→Update multi_select impossible without GET record or a raw parent_fk column.',
 		});
 	}
-	if (
-		engRowU?.data?.project_status &&
-		typeof engRowU.data.project_status === 'string'
-	) {
-		findings.ok.push(
-			'options=slugs on fixed_list → string suitable for PATCH (project_status)',
-		);
+	if (engRowU?.data?.project_status && typeof engRowU.data.project_status === 'string') {
+		findings.ok.push('options=slugs on fixed_list → string suitable for PATCH (project_status)');
 	}
 
 	const addMode = await api(
@@ -513,18 +462,14 @@ async function main() {
 		});
 		findings.ok.push('REST multi_value_modes=add works (gap only on the node side)');
 	} else {
-		findings.notes.push(
-			`multi_value_modes add not ok: ${addMode.status} — check contract`,
-		);
+		findings.notes.push(`multi_value_modes add not ok: ${addMode.status} — check contract`);
 	}
 
 	const engSchema = await api(
 		'GET',
 		`/api/v1/entities/${IDS.engProject}/forms/default/write-schema`,
 	);
-	const dc = (engSchema.fields || []).find(
-		(f) => f.name === 'document_controllers',
-	);
+	const dc = (engSchema.fields || []).find((f) => f.name === 'document_controllers');
 	if (dc?.input?.multi_select) {
 		findings.limits.push({
 			prio: 'P1',
@@ -551,12 +496,7 @@ async function main() {
 			if ((i + 1) % 10 === 0) log('seed50', `created ${i + 1}/${toCreate}`);
 		}
 		n = await countApprox(IDS.sede);
-		const afterOpts = await relationOptions(
-			IDS.corso,
-			'default',
-			'sede_id',
-			DROPDOWN_PROBE_LIMIT,
-		);
+		const afterOpts = await relationOptions(IDS.corso, 'default', 'sede_id', DROPDOWN_PROBE_LIMIT);
 		const nOpts = (afterOpts.records || []).length;
 		log('seed50', `count≈${n} relation-options(limit=50)=${nOpts}`);
 		if (nOpts >= 50) {
@@ -564,12 +504,9 @@ async function main() {
 				prio: 'P1',
 				id: 'dropdown-50',
 				title: 'Relation dropdown threshold = 50 (API allows up to 100; no search q= in node)',
-				detail:
-					`With ≥50 seats relation-options returns ${nOpts}. Node: dropdown only if <50, otherwise “paste UUID”. Improve: raise to 100 and/or interactive search.`,
+				detail: `With ≥50 seats relation-options returns ${nOpts}. Node: dropdown only if <50, otherwise “paste UUID”. Improve: raise to 100 and/or interactive search.`,
 			});
-			findings.ok.push(
-				'≥50 candidates behaviour confirmed (no dropdown in the node)',
-			);
+			findings.ok.push('≥50 candidates behaviour confirmed (no dropdown in the node)');
 		} else {
 			findings.notes.push(
 				`After seed, options=${nOpts} <50 — countApprox may undercount; check view/ACL`,
@@ -584,7 +521,8 @@ async function main() {
 		prio: 'P2',
 		id: 'max-pages',
 		title: 'listView pageMode=all: max 10 pages × 500 = 5000 rows',
-		detail: 'MAX_PAGES/MAX_PAGE_LIMIT in GenericFunctions.ts — fine for typical automation; document truncation.',
+		detail:
+			'MAX_PAGES/MAX_PAGE_LIMIT in GenericFunctions.ts — fine for typical automation; document truncation.',
 	});
 	findings.missing.push({
 		prio: 'P1',

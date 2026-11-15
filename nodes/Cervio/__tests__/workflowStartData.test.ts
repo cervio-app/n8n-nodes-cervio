@@ -6,11 +6,9 @@ import {
 	WORKFLOW_START_DATA_MAX_BYTES,
 	parseWorkflowDataPayload,
 	resolveWorkflowStartData,
-} from '../execute/helpers';
+} from '../execute/workflowData';
 
-function mockCtx(
-	params: Record<string, unknown>,
-): IExecuteFunctions {
+function mockCtx(params: Record<string, unknown>): IExecuteFunctions {
 	return {
 		getNode: () => ({ name: 'Cervio' }),
 		getNodeParameter: (name: string, _i?: number, fallback?: unknown) => {
@@ -25,7 +23,12 @@ describe('parseWorkflowDataPayload', () => {
 		const ctx = mockCtx({});
 		const out = parseWorkflowDataPayload(
 			ctx,
-			{ values: [{ name: 'foo', value: 'bar' }, { name: 'n', value: 1 }] },
+			{
+				values: [
+					{ name: 'foo', value: 'bar' },
+					{ name: 'n', value: 1 },
+				],
+			},
 			0,
 		);
 		expect(out).toEqual({ foo: 'bar', n: 1 });

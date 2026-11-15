@@ -52,9 +52,7 @@ async function api(method, path, body, { allowStatuses = [], formData = false } 
 		json = { raw: text };
 	}
 	if (!res.ok && !allowStatuses.includes(res.status)) {
-		const err = new Error(
-			`${method} ${path} → ${res.status}: ${JSON.stringify(json)}`,
-		);
+		const err = new Error(`${method} ${path} → ${res.status}: ${JSON.stringify(json)}`);
 		err.status = res.status;
 		err.body = json;
 		throw err;
@@ -71,8 +69,7 @@ async function main() {
 	await api('GET', '/api/v1/me');
 
 	const forms = await api('GET', `/api/v1/admin/entities/${ENTITY_ID}/forms`);
-	const form =
-		forms.json.forms?.find((f) => f.name === 'default') || forms.json.forms?.[0];
+	const form = forms.json.forms?.find((f) => f.name === 'default') || forms.json.forms?.[0];
 	assert(form?.name, 'need form default on smoke entity');
 
 	const stamp = Date.now();
@@ -95,10 +92,7 @@ async function main() {
 		cleanup.push([ENTITY_ID, recordId]);
 		console.log('created:', recordId);
 
-		const got = await api(
-			'GET',
-			`/api/v1/entities/${ENTITY_ID}/records/${recordId}`,
-		);
+		const got = await api('GET', `/api/v1/entities/${ENTITY_ID}/records/${recordId}`);
 		assert(got.json.record?.id === recordId, 'get record id');
 		console.log('get: ok');
 
@@ -113,27 +107,20 @@ async function main() {
 		assert(typeof validated.json.ok === 'boolean', 'validate-draft ok boolean');
 		console.log('validate-draft: ok');
 
-		const listed = await api(
-			'GET',
-			`/api/v1/entities/${ENTITY_ID}/records?limit=5&offset=0`,
-		);
+		const listed = await api('GET', `/api/v1/entities/${ENTITY_ID}/records?limit=5&offset=0`);
 		assert(Array.isArray(listed.json.records), 'list records array');
 		console.log('listRecords: ok');
 
-		const upserted = await api(
-			'POST',
-			`/api/v1/entities/${ENTITY_ID}/records/upsert`,
-			{
-				form_name: form.name,
-				match_field: 'nome',
-				data: {
-					nome,
-					data_inizio: '2026-11-05',
-					stato: 'In corso',
-					budget: 2,
-				},
+		const upserted = await api('POST', `/api/v1/entities/${ENTITY_ID}/records/upsert`, {
+			form_name: form.name,
+			match_field: 'nome',
+			data: {
+				nome,
+				data_inizio: '2026-11-05',
+				stato: 'In corso',
+				budget: 2,
 			},
-		);
+		});
 		assert(upserted.json.id === recordId, 'upsert should update same id');
 		assert(
 			upserted.json.action === 'updated',
@@ -160,11 +147,7 @@ async function main() {
 		assert(Array.isArray(docsBefore.json.documents), 'list documents array');
 
 		const fd = new FormData();
-		fd.append(
-			'file',
-			new Blob([`n8n smoke ${stamp}`], { type: 'text/plain' }),
-			'smoke.txt',
-		);
+		fd.append('file', new Blob([`n8n smoke ${stamp}`], { type: 'text/plain' }), 'smoke.txt');
 		fd.append('file_name', 'smoke.txt');
 		fd.append('title', 'n8n-smoke');
 		const uploaded = await api(
@@ -208,43 +191,40 @@ async function main() {
 			});
 			assert(corso.json.id, 'near entity create id');
 			cleanup.push([CORSO_ID, corso.json.id]);
-			const argomento = await api(
-				'POST',
-				`/api/v1/entities/${ARGOMENTO_ID}/records`,
-				{
-					form_name: 'default',
-					data: { nome: `n8n-link-arg-${stamp}` },
-				},
-			);
+			const argomento = await api('POST', `/api/v1/entities/${ARGOMENTO_ID}/records`, {
+				form_name: 'default',
+				data: { nome: `n8n-link-arg-${stamp}` },
+			});
 			assert(argomento.json.id, 'far entity create id');
 			cleanup.push([ARGOMENTO_ID, argomento.json.id]);
 
-			const linked = await api(
-				'POST',
-				`/api/v1/entities/${CORSO_ID}/forms/default/fields/${encodeURIComponent(THROUGH_FIELD)}/links`,
-				{
-					from_record_id: corso.json.id,
-					far_record_id: argomento.json.id,
-				},
-			);
-			assert(linked.json.junction_record_id, 'link junction_record_id');
-			console.log('linkRecords:', linked.json.junction_record_id);
+			// A link is one junction row: linking the same pair twice adds a second row.
+			const linksPath = `/api/v1/entities/${CORSO_ID}/forms/default/fields/${encodeURIComponent(THROUGH_FIELD)}/links`;
+			const link = () =>
+				api('POST', linksPath, { from_record_id: corso.json.id, far_record_id: argomento.json.id });
+			const unlink = (rowId) =>
+				api('DELETE', linksPath, { from_record_id: corso.json.id, junction_record_id: rowId });
 
-			const unlinked = await api(
-				'DELETE',
-				`/api/v1/entities/${CORSO_ID}/forms/default/fields/${encodeURIComponent(THROUGH_FIELD)}/links`,
-				{
-					from_record_id: corso.json.id,
-					far_record_id: argomento.json.id,
-				},
+			const first = await link();
+			const second = await link();
+			assert(first.json.junction_record_id, 'link junction_record_id');
+			assert(
+				second.json.junction_record_id &&
+					second.json.junction_record_id !== first.json.junction_record_id,
+				'linking the same pair again creates another row',
 			);
-			if (unlinked.json.deleted >= 1) {
-				console.log('unlinkRecords: deleted', unlinked.json.deleted);
-			} else {
-				console.log(
-					'WARN unlinkRecords: deleted=0 under PAT — check junction ACL / listJunctionRowsForNear on the tenant.',
-				);
-			}
+			console.log('linkRecords:', first.json.junction_record_id, second.json.junction_record_id);
+
+			assert((await unlink(first.json.junction_record_id)).json.deleted === 1, 'unlink by row id');
+			assert(
+				(await unlink(first.json.junction_record_id)).json.deleted === 0,
+				'unlink again is a no-op',
+			);
+			assert(
+				(await unlink(second.json.junction_record_id)).json.deleted === 1,
+				'other row kept, then removed',
+			);
+			console.log('unlinkRecords: by row id OK');
 		} else {
 			console.log(
 				'link/unlink: SKIP (set CERVIO_SMOKE_CORSO_ID, CERVIO_SMOKE_ARGOMENTO_ID, CERVIO_SMOKE_THROUGH_FIELD)',
@@ -269,10 +249,7 @@ async function main() {
 					'GET',
 					`/api/v1/admin/workflows/${WORKFLOW_ID}/runs/${started.json.invocation_id}`,
 				);
-				assert(
-					status.json.run || status.json.status || status.json,
-					'run status payload',
-				);
+				assert(status.json.run || status.json.status || status.json, 'run status payload');
 				console.log(
 					'getWorkflowRun:',
 					status.json.run?.status || status.json.status || 'payload ok',
@@ -288,10 +265,7 @@ async function main() {
 
 		const extraDelete = process.env.CERVIO_SMOKE_DELETE_ID?.trim();
 		if (extraDelete) {
-			const del = await api(
-				'DELETE',
-				`/api/v1/entities/${ENTITY_ID}/records/${extraDelete}`,
-			);
+			const del = await api('DELETE', `/api/v1/entities/${ENTITY_ID}/records/${extraDelete}`);
 			assert(del.json.ok === true, 'delete ok');
 			console.log('extra delete:', extraDelete);
 		}
@@ -301,12 +275,9 @@ async function main() {
 		} else {
 			for (const [entityId, id] of cleanup.reverse()) {
 				try {
-					const del = await api(
-						'DELETE',
-						`/api/v1/entities/${entityId}/records/${id}`,
-						undefined,
-						{ allowStatuses: [404] },
-					);
+					const del = await api('DELETE', `/api/v1/entities/${entityId}/records/${id}`, undefined, {
+						allowStatuses: [404],
+					});
 					if (del.status === 200) console.log('cleaned up:', id);
 				} catch (e) {
 					console.error('cleanup failed:', id, e.message || e);

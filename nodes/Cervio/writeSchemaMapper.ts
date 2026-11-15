@@ -1,7 +1,8 @@
 /**
  * Pure helpers: Cervio write-schema → n8n resourceMapper fields.
- * Kept free of n8n runtime so unit tests can run without the workflow package.
+ * Only types come from n8n-workflow, so these helpers stay free of the n8n runtime.
  */
+import type { IDataObject, ResourceMapperField } from 'n8n-workflow';
 
 export type WriteDiscoveryValueShape =
 	| 'string'
@@ -46,32 +47,12 @@ export type WriteDiscoverySchema = {
 	fields: WriteDiscoveryField[];
 };
 
-/** Field type strings understood by n8n resourceMapper. */
-export type MapperFieldType =
-	| 'string'
-	| 'number'
-	| 'boolean'
-	| 'dateTime'
-	| 'time'
-	| 'object'
-	| 'options'
-	| 'array';
-
-export type MapperFieldOption = { name: string; value: string };
-
-export type MapperField = {
-	id: string;
-	displayName: string;
-	required: boolean;
-	defaultMatch: boolean;
-	canBeUsedToMatch: boolean;
-	display: boolean;
-	type: MapperFieldType;
-	options?: MapperFieldOption[];
-	readOnly?: boolean;
-	removed?: boolean;
-	description?: string;
-};
+/**
+ * A resource mapper column, as n8n defines it. n8n shows no per-column description,
+ * so hints for the user belong in the Fields parameter's description instead.
+ */
+export type MapperField = ResourceMapperField;
+export type MapperFieldType = NonNullable<ResourceMapperField['type']>;
 
 /** Whether a write-schema field should appear in the guided mapper. */
 export function isWritableMapperField(field: WriteDiscoveryField): boolean {
@@ -81,9 +62,7 @@ export function isWritableMapperField(field: WriteDiscoveryField): boolean {
 	return true;
 }
 
-export function mapValueShapeToMapperType(
-	field: WriteDiscoveryField,
-): MapperFieldType {
+export function mapValueShapeToMapperType(field: WriteDiscoveryField): MapperFieldType {
 	if (field.input.mode === 'fixed_list') return 'options';
 	if (field.input.mode === 'boolean' || field.value_shape === 'boolean') {
 		return 'boolean';
@@ -128,23 +107,6 @@ export function writeSchemaToMapperFields(
 					}))
 				: undefined;
 
-		const descriptionParts: string[] = [];
-		if (field.instructions) descriptionParts.push(field.instructions);
-		if (field.input.mode === 'relation') {
-			if (field.input.multi_select) {
-				descriptionParts.push(
-					'Multi-select: UUID array (or JSON string / comma-separated UUIDs). On Update use “Multi-value mode” (add/replace/remove). If the dropdown is missing, use the “Search relation” operation.',
-				);
-			} else {
-				descriptionParts.push(
-					'UUID of the related record. Dropdown when few candidates; otherwise use “Search relation” or paste a UUID.',
-				);
-			}
-		}
-		if (field.input.mode === 'remote_options') {
-			descriptionParts.push('Remote option value: use the saved slug or id.');
-		}
-
 		return {
 			id: field.name,
 			displayName: field.label || field.name,
@@ -154,10 +116,30 @@ export function writeSchemaToMapperFields(
 			display: true,
 			type,
 			options,
-			description:
-				descriptionParts.length > 0 ? descriptionParts.join(' ') : undefined,
 		};
 	});
+}
+
+/**
+ * Junction schema without the relation fields to the two linked entities: Cervio
+ * fills those keys itself when it creates the link, and ignores them in `data`.
+ */
+export function withoutRelationsTo(
+	schema: WriteDiscoverySchema,
+	entityIds: ReadonlyArray<string | null | undefined>,
+): WriteDiscoverySchema {
+	const skip = new Set(entityIds.filter((id): id is string => Boolean(id)));
+	return {
+		...schema,
+		fields: schema.fields.filter(
+			(f) =>
+				!(
+					f.input.mode === 'relation' &&
+					f.input.relation_entity_id &&
+					skip.has(f.input.relation_entity_id)
+				),
+		),
+	};
 }
 
 /** Unwrap listView `{ id, label }` (and arrays thereof) into write-ready ids/slugs. */
@@ -206,8 +188,7 @@ export function pickCompiledFieldValues(
 	const out: Record<string, unknown> = {};
 	for (const [key, value] of Object.entries(raw)) {
 		if (value === undefined || value === null) continue;
-		const coerced = coerceWriteValue(value);
-		if (coerced === undefined || coerced === null) continue;
+		const coerced = coerceWriteValue(value); // never null for a non-null value
 		if (typeof coerced === 'string' && coerced.trim() === '') continue;
 		if (Array.isArray(coerced) && coerced.length === 0) continue;
 		out[key] = coerced;
@@ -218,8 +199,8 @@ export function pickCompiledFieldValues(
 /** Same as pickCompiledFieldValues, typed for n8n IDataObject consumers. */
 export function pickCompiledFieldData(
 	raw: Record<string, unknown> | null | undefined,
-): import('n8n-workflow').IDataObject {
-	return pickCompiledFieldValues(raw) as import('n8n-workflow').IDataObject;
+): IDataObject {
+	return pickCompiledFieldValues(raw) as IDataObject;
 }
 
 export function formLabelWithRole(form: {

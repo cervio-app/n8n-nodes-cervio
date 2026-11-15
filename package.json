@@ -1,79 +1,85 @@
 {
-  "name": "@cervio/n8n-nodes-cervio",
-  "version": "0.2.6",
-  "description": "n8n community node for Cervio — entity records, documents, N:M links, workflows, and notifications via REST /api/v1",
-  "license": "MIT",
-  "homepage": "https://cervio.app",
-  "keywords": [
-    "n8n-community-node-package",
-    "n8n-nodes",
-    "n8n",
-    "cervio",
-    "crm",
-    "workflow",
-    "automation"
-  ],
-  "author": {
-    "name": "Cervio",
-    "email": "dev@cervio.app"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/cervio-app/n8n-nodes-cervio.git"
-  },
-  "bugs": {
-    "url": "https://github.com/cervio-app/n8n-nodes-cervio/issues"
-  },
-  "publishConfig": {
-    "access": "public"
-  },
-  "engines": {
-    "node": ">=20"
-  },
-  "scripts": {
-    "build": "tsc && node scripts/copy-icons.mjs",
-    "build:watch": "tsc --watch",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage",
-    "smoke": "node scripts/smoke.mjs",
-    "smoke:relations": "node scripts/smoke-relations.mjs",
-    "smoke:extended": "node scripts/smoke-extended.mjs",
-    "verify": "node scripts/verify-node-load.mjs && node scripts/verify-community-invariants.mjs",
-    "lint": "npm run lint:tsc && npm run lint:eslint",
-    "lint:tsc": "tsc --noEmit",
-    "lint:eslint": "eslint . --max-warnings 0",
-    "prepublishOnly": "npm run lint && npm run build && npm run test:coverage && npm run verify"
-  },
-  "files": [
-    "dist",
-    "media"
-  ],
-  "n8n": {
-    "n8nNodesApiVersion": 1,
-    "credentials": [
-      "dist/credentials/CervioApi.credentials.js"
-    ],
-    "nodes": [
-      "dist/nodes/Cervio/Cervio.node.js"
-    ]
-  },
-  "devDependencies": {
-    "@eslint/json": "^2.1.1",
-    "@n8n/eslint-plugin-community-nodes": "^1.0.1",
-    "@vitest/coverage-v8": "^5.1.0",
-    "eslint": "^9.29.0",
-    "n8n-workflow": "^2.16.0",
-    "typescript": "5.9.3",
-    "typescript-eslint": "^8.70.0",
-    "vitest": "^5.1.0"
-  },
-  "peerDependencies": {
-    "n8n-workflow": "*"
-  },
-  "peerDependenciesMeta": {
-    "n8n-workflow": {
-      "optional": true
-    }
-  }
+	"name": "@cervio/n8n-nodes-cervio",
+	"version": "0.3.0",
+	"description": "n8n community node for Cervio — entity records, documents, N:M links, workflows, and notifications via REST /api/v1",
+	"license": "MIT",
+	"homepage": "https://cervio.app",
+	"keywords": [
+		"n8n-community-node-package",
+		"n8n-nodes",
+		"n8n",
+		"cervio",
+		"crm",
+		"workflow",
+		"automation"
+	],
+	"author": {
+		"name": "Cervio",
+		"email": "dev@cervio.app"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/cervio-app/n8n-nodes-cervio.git"
+	},
+	"bugs": {
+		"url": "https://github.com/cervio-app/n8n-nodes-cervio/issues"
+	},
+	"publishConfig": {
+		"access": "public"
+	},
+	"engines": {
+		"node": ">=20"
+	},
+	"scripts": {
+		"clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\"",
+		"build": "npm run clean && tsc && node scripts/copy-icons.mjs",
+		"build:watch": "tsc --watch",
+		"test": "vitest run",
+		"test:watch": "vitest",
+		"test:coverage": "vitest run --coverage",
+		"smoke": "node scripts/smoke.mjs",
+		"smoke:relations": "node scripts/smoke-relations.mjs",
+		"smoke:extended": "node scripts/smoke-extended.mjs",
+		"verify": "node scripts/verify-node-load.mjs && node scripts/verify-community-invariants.mjs",
+		"lint": "npm run lint:tsc && npm run lint:eslint && npm run format:check",
+		"lint:tsc": "tsc --noEmit && tsc -p tsconfig.test.json",
+		"lint:eslint": "eslint . --max-warnings 0",
+		"format": "prettier --write .",
+		"format:check": "prettier --check .",
+		"prepublishOnly": "npm run lint && npm run build && npm run test:coverage && npm run verify",
+		"e2e": "node scripts/e2e/run.mjs"
+	},
+	"files": [
+		"dist",
+		"media"
+	],
+	"n8n": {
+		"n8nNodesApiVersion": 1,
+		"credentials": [
+			"dist/credentials/CervioApi.credentials.js"
+		],
+		"nodes": [
+			"dist/nodes/Cervio/Cervio.node.js"
+		]
+	},
+	"devDependencies": {
+		"@eslint/json": "^2.1.1",
+		"@n8n/eslint-plugin-community-nodes": "^1.0.1",
+		"@types/node": "^22.20.5",
+		"@vitest/coverage-v8": "^5.1.0",
+		"eslint": "^9.29.0",
+		"n8n-workflow": "^2.16.0",
+		"prettier": "3.3.3",
+		"typescript": "5.9.3",
+		"typescript-eslint": "^8.70.0",
+		"vitest": "^5.1.0"
+	},
+	"peerDependencies": {
+		"n8n-workflow": "*"
+	},
+	"peerDependenciesMeta": {
+		"n8n-workflow": {
+			"optional": true
+		}
+	}
 }

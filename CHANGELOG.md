@@ -7,6 +7,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-11-15
+
+### Changed
+
+- **Breaking:** **Unlink Records** removes one N:M link row by **Link ID** (`DELETE …/links` body `{ from_record_id, junction_record_id }`), matching Cervio's links API. The old *Far Record ID* input on Unlink is gone: Cervio no longer unlinks by record pair.
+- **Breaking:** **List**, **List view** and **Search** now run once per input item, like every other operation, and pair each output with its input item. Use the node setting **Execute Once** for the previous single-run behaviour.
+- **Link Records** returns `{ junction_record_id, record_id, far_record_id, data? }`. Linking the same far record again adds another row.
+- Ids used in URL paths (entity, record, view, document, workflow, run) must be UUIDs; anything else is rejected before the request is sent.
+- Errors raised while processing an item carry that item's index.
+- **Breaking:** **Document → List** returns no items for a record without documents (it used to return one `{ _empty: true }` item). Turn on the node setting **Always Output Data** to keep the flow going.
+- **Notify Users** rejects user IDs that are not UUIDs and names them, instead of silently dropping them.
+- API errors show Cervio's own message (e.g. `Missing required junction fields: anno`) instead of n8n's generic text for the HTTP status.
+- Editor texts rewritten for n8n users, without Cervio internals (slugs, write-schema, API paths). Renamed labels, same parameters, so existing workflows keep working: **Through Field (N:M)** → **N:M Field**, **Option Lists** → **Choice Fields**, **Relations** → **Relation Fields**, **Multi-Value Mode** → **Multi-Select Fields**, **Expected Updated At** → **Only If Unchanged Since**, **Binary Property** → **Input Binary Field**, **Record ID (entity_data_id)** → **Record ID**.
+- Source split by resource (`description/*.ts`) and by concern (`execute/parameters.ts`, `execute/workflowData.ts`, `methods/mapperFields.ts`). Code formatted with Prettier, checked in CI.
+
+### Fixed
+
+- **Security:** the Base URL check now also blocks IPv6 link-local (`fe80::/10`), the AWS IPv6 metadata address and IPv4-mapped metadata addresses (`[::ffff:169.254.169.254]`). IPv6 hosts were not matched before because URL hostnames keep their brackets.
+- **Security:** **Test credential** runs through the node and applies the same Base URL check before calling Cervio; the credential no longer declares its own unchecked test request.
+- `npm run build` empties `dist/` first, so files of removed modules are never packed.
+
+### Added
+
+- **Link Records → Link Fields:** fill the other fields of the link row (e.g. year, hours) from the junction entity's create form.
+- Tests cover 100% of statements, branches, functions and lines of the node and credential, enforced in CI; tests are type-checked by `npm run lint`.
+
+### Added (development)
+
+- `npm run e2e`: end-to-end tests of the packed node in a local n8n against a Cervio test tenant ([docs/e2e.md](docs/e2e.md)).
+
+### Removed
+
+- Per-field hints in the resource mapper: n8n does not display them. The guidance is now in the **Fields** description.
+
+- Internal `batchOps` module and the per-resource copies of the error handling: one per-item runner handles `continueOnFail` and `pairedItem` for all operations.
+
 ## [0.2.6] - 2026-11-06
 
 ### Added
@@ -83,7 +119,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Scoped package `@cervio/n8n-nodes-cervio`; unscoped name deprecated.
 
-[Unreleased]: https://github.com/cervio-app/n8n-nodes-cervio/compare/v0.2.6...HEAD
+[Unreleased]: https://github.com/cervio-app/n8n-nodes-cervio/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/cervio-app/n8n-nodes-cervio/releases/tag/v0.3.0
 [0.2.6]: https://github.com/cervio-app/n8n-nodes-cervio/releases/tag/v0.2.6
 [0.2.5]: https://github.com/cervio-app/n8n-nodes-cervio/releases/tag/v0.2.5
 [0.2.4]: https://github.com/cervio-app/n8n-nodes-cervio/releases/tag/v0.2.4

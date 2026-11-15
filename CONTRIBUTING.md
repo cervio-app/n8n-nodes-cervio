@@ -42,8 +42,8 @@ Examples: `feat: add upsert record operation`, `fix: coerce relation id on updat
 
 ## Pull requests
 
-1. Branch from `main`
-2. Stay REST-only (`/api/v1`) — no MCP/Edge calls from this package
+1. Branch from `develop` and open the pull request against `develop`
+2. Stay REST-only (`/api/v1`) — no MCP/Edge calls from this package (the e2e scripts use Cervio MCP only to build test data)
 3. CI must pass (`lint`, `build`, `test`, `verify`)
 4. Update `README.md` when operations change
 5. Keep unit tests next to the node under `nodes/Cervio/__tests__/`
@@ -53,11 +53,11 @@ Examples: `feat: add upsert record operation`, `fix: coerce relation id on updat
 
 Keep these three equal for every release:
 
-| Source | Example |
-|--------|---------|
-| `package.json` `version` | `0.2.6` |
-| Annotated git tag | `v0.2.6` |
-| npm `@cervio/n8n-nodes-cervio` | `0.2.6` |
+| Source                         | Example  |
+| ------------------------------ | -------- |
+| `package.json` `version`       | `0.3.0`  |
+| Annotated git tag              | `v0.3.0` |
+| npm `@cervio/n8n-nodes-cervio` | `0.3.0`  |
 
 - Never move or delete a published `v*` tag
 - Pushing a `v*.*.*` tag runs [.github/workflows/publish.yml](./.github/workflows/publish.yml) (npm Trusted Publishing via OIDC + provenance, then GitHub Release). If that version is already on npm, the job skips publish and still ensures a GitHub Release exists.
@@ -65,11 +65,16 @@ Keep these three equal for every release:
 
 ### Cut a release
 
+`main` holds released code only; work lands on `develop` first.
+
+1. On `develop`: move CHANGELOG `[Unreleased]` into a new version section and set `version` in `package.json` (and `package-lock.json`).
+2. Run `npm run lint`, `npm run test:coverage`, `npm run verify` and, against a test tenant, `npm run e2e` ([docs/e2e.md](docs/e2e.md)).
+3. Open the release pull request `develop` → `main` and merge it with a merge commit.
+4. Tag the merge commit on `main` and push the tag:
+
 ```bash
-# from a clean main, after features are merged
-# 1. Move CHANGELOG [Unreleased] → new version section
-npm version patch   # or minor / major — bumps package.json, commits, tags vX.Y.Z
-git push origin main --follow-tags
+git tag -a vX.Y.Z -m "vX.Y.Z" <merge commit on main>
+git push origin vX.Y.Z
 # publish.yml publishes to npm and creates the GitHub Release
 ```
 
@@ -84,3 +89,7 @@ Legacy unscoped name (if still present):
 ```bash
 npm deprecate n8n-nodes-cervio@"*" "Use @cervio/n8n-nodes-cervio instead"
 ```
+
+## End-to-end tests
+
+`npm run e2e` runs the packed node in a local n8n against a Cervio test tenant. See [docs/e2e.md](docs/e2e.md).

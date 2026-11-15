@@ -1,108 +1,98 @@
-import type { IDataObject, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
-import { NodeApiError, NodeOperationError } from 'n8n-workflow';
+import type { IDataObject } from 'n8n-workflow';
+import {
+	linkThroughRecords,
+	resolveNaturalKeys,
+	searchRelationOptions,
+	RELATION_DROPDOWN_LIMIT,
+	RELATION_SEARCH_MAX_LIMIT,
+	unlinkThroughRecord,
+} from '../GenericFunctions';
+import {
+	optionalString,
+	parseResolveValues,
+	readJunctionFieldData,
+	requireRecordId,
+	requireString,
+} from './parameters';
+import type { OperationHandler } from './types';
 
-import { linkThroughRecords, resolveNaturalKeys, unlinkThroughRecords } from '../GenericFunctions';
-import { parseResolveValues, requireRecordId } from './helpers';
+export const relationOperations: Record<string, OperationHandler> = {
+	async searchRelation(i) {
+		const entityId = this.getNodeParameter('entityId', i) as string;
+		const formName = this.getNodeParameter('formName', i) as string;
+		const fieldName = requireString(this, 'relationFieldName', i, 'Relation field');
+		const q = optionalString(this.getNodeParameter('relationQuery', i, ''));
+		const limit = Math.min(
+			RELATION_SEARCH_MAX_LIMIT,
+			Math.max(
+				1,
+				Number(this.getNodeParameter('relationLimit', i, RELATION_DROPDOWN_LIMIT)) ||
+					RELATION_DROPDOWN_LIMIT,
+			),
+		);
+		const records = await searchRelationOptions.call(this, entityId, formName, fieldName, limit, q);
+		return records.map((r) => ({ id: r.id, label: r.label, field: fieldName }));
+	},
 
-export async function executeRelationOperations(
-	this: IExecuteFunctions,
-	items: INodeExecutionData[],
-	operation: string,
-	returnData: INodeExecutionData[],
-): Promise<void> {
-	for (let i = 0; i < items.length; i++) {
-		try {
-			const entityId = this.getNodeParameter('entityId', i) as string;
+	async resolveRelation(i) {
+		const entityId = this.getNodeParameter('entityId', i) as string;
+		const matchField = this.getNodeParameter('matchField', i) as string;
+		const values = parseResolveValues(this, this.getNodeParameter('resolveValues', i) as string, i);
+		const options = this.getNodeParameter('resolveOptions', i, {}) as IDataObject;
+		const resolved = await resolveNaturalKeys.call(
+			this,
+			entityId,
+			matchField,
+			values,
+			optionalString(options.fieldName),
+		);
+		const results = (resolved as { results?: unknown[] }).results ?? [resolved];
+		return results as IDataObject[];
+	},
 
-			if (operation === 'linkRecords' || operation === 'unlinkRecords') {
-				const formName = this.getNodeParameter('formName', i) as string;
-				const fromRecordId = requireRecordId(this, i);
-				const farRecordId = (this.getNodeParameter('farRecordId', i) as string)?.trim();
-				const throughField = (this.getNodeParameter('throughFieldName', i) as string)?.trim();
-				if (!farRecordId || !throughField) {
-					throw new NodeOperationError(
-						this.getNode(),
-						'Through field and far record ID are required.',
-						{ itemIndex: i },
-					);
-				}
-				if (operation === 'linkRecords') {
-					const linked = await linkThroughRecords.call(
-						this,
-						entityId,
-						formName,
-						throughField,
-						fromRecordId,
-						farRecordId,
-					);
-					returnData.push({
-						json: linked as IDataObject,
-						pairedItem: { item: i },
-					});
-				} else {
-					const unlinked = await unlinkThroughRecords.call(
-						this,
-						entityId,
-						formName,
-						throughField,
-						fromRecordId,
-						farRecordId,
-					);
-					returnData.push({
-						json: unlinked as IDataObject,
-						pairedItem: { item: i },
-					});
-				}
-				continue;
-			}
+	async linkRecords(i) {
+		const entityId = this.getNodeParameter('entityId', i) as string;
+		const formName = this.getNodeParameter('formName', i) as string;
+		const throughField = requireString(this, 'throughFieldName', i, 'Through field');
+		const fromRecordId = requireRecordId(this, i);
+		const farRecordId = requireString(this, 'farRecordId', i, 'Far record ID');
+		const data = readJunctionFieldData(this, i);
+		const linked = await linkThroughRecords.call(
+			this,
+			entityId,
+			formName,
+			throughField,
+			fromRecordId,
+			farRecordId,
+			data,
+		);
+		return {
+			junction_record_id: linked.junction_record_id,
+			record_id: fromRecordId,
+			far_record_id: farRecordId,
+			...(Object.keys(data).length > 0 ? { data } : {}),
+		};
+	},
 
-			if (operation === 'resolveRelation') {
-				const matchField = this.getNodeParameter('matchField', i) as string;
-				const values = parseResolveValues(
-					this,
-					this.getNodeParameter('resolveValues', i) as string,
-					i,
-				);
-				const resolveOptions = this.getNodeParameter('resolveOptions', i, {}) as IDataObject;
-				const fieldName =
-					typeof resolveOptions.fieldName === 'string' && resolveOptions.fieldName.trim()
-						? resolveOptions.fieldName.trim()
-						: undefined;
-				const resolved = await resolveNaturalKeys.call(
-					this,
-					entityId,
-					matchField,
-					values,
-					fieldName,
-				);
-				const results = (resolved as { results?: unknown[] }).results ?? [resolved];
-				for (const row of results) {
-					returnData.push({
-						json: row as IDataObject,
-						pairedItem: { item: i },
-					});
-				}
-				continue;
-			}
-		} catch (error) {
-			if (this.continueOnFail()) {
-				returnData.push({
-					json: {
-						error: error instanceof Error ? error.message : String(error),
-					},
-					pairedItem: { item: i },
-				});
-				continue;
-			}
-			const wrapped =
-				error instanceof NodeOperationError || error instanceof NodeApiError
-					? error
-					: new NodeOperationError(
-							this.getNode(),
-							error instanceof Error ? error.message : String(error),
-							{ itemIndex: i },
-						);
-			throw wrapped;
-		}
-	}
-}
+	async unlinkRecords(i) {
+		const entityId = this.getNodeParameter('entityId', i) as string;
+		const formName = this.getNodeParameter('formName', i) as string;
+		const throughField = requireString(this, 'throughFieldName', i, 'Through field');
+		const fromRecordId = requireRecordId(this, i);
+		const junctionRecordId = requireString(this, 'junctionRecordId', i, 'Junction record ID');
+		const result = await unlinkThroughRecord.call(
+			this,
+			entityId,
+			formName,
+			throughField,
+			fromRecordId,
+			junctionRecordId,
+		);
+		// deleted = 0: the row is already gone or belongs to another record (safe to retry).
+		return {
+			deleted: result.deleted,
+			junction_record_id: junctionRecordId,
+			record_id: fromRecordId,
+		};
+	},
+};

@@ -13,7 +13,7 @@ export default tseslint.config(
 			'**/__tests__/**',
 			'node_modules/**',
 			'eslint.config.mjs',
-			'vitest.config.ts',
+			'vitest.config.mts',
 			'package-lock.json',
 		],
 	},
