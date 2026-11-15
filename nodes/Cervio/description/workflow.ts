@@ -5,6 +5,7 @@ export const workflowFields: INodeProperties[] = [
 	{
 		displayName: 'Workflow',
 		name: 'workflowId',
+		description: 'The Cervio workflow to start or check.',
 		type: 'options',
 		typeOptions: {
 			loadOptionsMethod: 'getWorkflows',
@@ -18,7 +19,7 @@ export const workflowFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'Record ID (entity_data_id)',
+		displayName: 'Record ID',
 		name: 'entityDataId',
 		type: 'string',
 		required: true,
@@ -28,7 +29,7 @@ export const workflowFields: INodeProperties[] = [
 				operation: ['startWorkflow'],
 			},
 		},
-		description: 'UUID of the record to start the workflow on.',
+		description: 'ID of the record the workflow runs on.',
 	},
 	{
 		displayName: 'Additional Data Mode',
@@ -38,12 +39,12 @@ export const workflowFields: INodeProperties[] = [
 			{
 				name: 'Key/Value',
 				value: 'keyValue',
-				description: 'Add fields one by one (name + value)',
+				description: 'Add values one by one',
 			},
 			{
 				name: 'JSON',
 				value: 'json',
-				description: 'Pass a JSON object as $trigger.data (max 64 KiB)',
+				description: 'Pass a JSON object, up to 64 KiB',
 			},
 		],
 		default: 'keyValue',
@@ -52,8 +53,7 @@ export const workflowFields: INodeProperties[] = [
 				operation: ['startWorkflow'],
 			},
 		},
-		description:
-			'How to send optional start payload. Cervio accepts a free JSON object on POST /api/v1/workflows/:id/runs.',
+		description: 'How to pass extra data to the workflow, where it is available as $trigger.data.',
 	},
 	{
 		displayName: 'Additional Data',
@@ -78,7 +78,7 @@ export const workflowFields: INodeProperties[] = [
 				],
 			},
 		],
-		description: 'Optional key/value payload for the manual trigger.',
+		description: 'Extra values for the workflow ($trigger.data).',
 	},
 	{
 		displayName: 'Additional Data (JSON)',
@@ -92,8 +92,7 @@ export const workflowFields: INodeProperties[] = [
 				workflowDataMode: ['json'],
 			},
 		},
-		description:
-			'JSON object passed as start `data` (becomes $trigger.data). Must be an object, not an array. Max 64 KiB.',
+		description: 'JSON object for the workflow ($trigger.data), up to 64 KiB.',
 	},
 	{
 		displayName: 'Run ID',
@@ -106,6 +105,6 @@ export const workflowFields: INodeProperties[] = [
 				operation: ['getWorkflowRun'],
 			},
 		},
-		description: 'invocation_id returned by Start Workflow.',
+		description: 'The invocation_id returned by Start.',
 	},
 ];

@@ -16,7 +16,7 @@ export const commonFields: INodeProperties[] = [
 				operation: ['startWorkflow', 'getWorkflowRun', 'notifySelf', 'notifyUsers'],
 			},
 		},
-		description: 'Only entities this token can read.',
+		description: 'The kind of record to work with. Only entities the token can read are listed.',
 	},
 	{
 		displayName: 'Form',
@@ -42,7 +42,7 @@ export const commonFields: INodeProperties[] = [
 			},
 		},
 		description:
-			'Fields below are from this form, not every entity field. Cervio rejects fields that are not on this form. N:M fields are not in Fields: use Link Records / Unlink Records.',
+			'The form whose fields are offered below. Cervio accepts only fields that are on this form. N:M fields are handled by Link Records and Unlink Records.',
 	},
 	{
 		displayName: 'Record ID',
@@ -65,7 +65,7 @@ export const commonFields: INodeProperties[] = [
 				],
 			},
 		},
-		description: 'Record id from List view, e.g. {{ $json.id }}. Not a form field.',
+		description: 'ID of the record, e.g. {{ $json.id }} from a previous Cervio node.',
 	},
 	{
 		displayName: 'Match Field',
@@ -82,6 +82,6 @@ export const commonFields: INodeProperties[] = [
 				operation: ['upsert', 'resolveRelation'],
 			},
 		},
-		description: 'Unique scalar field for upsert or resolve.',
+		description: 'A field with unique values (e.g. a code or an email) used to find the record.',
 	},
 ];

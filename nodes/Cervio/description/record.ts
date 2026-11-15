@@ -31,7 +31,7 @@ export const recordFields: INodeProperties[] = [
 			},
 		},
 		description:
-			'Computed Cervio fields are omitted — the server fills them. Use “Add all fields” to start from the full form.',
+			'Fields that Cervio calculates are not listed: it fills them when saving. Use “Add all fields” to start from the whole form.',
 	},
 	{
 		displayName: 'Fields',
@@ -62,7 +62,7 @@ export const recordFields: INodeProperties[] = [
 			},
 		},
 		description:
-			'Leave a field empty to leave it unchanged. At least one field must be set. PATCH merges; other values stay.',
+			'Only the fields you set are changed; the others keep their value. Set at least one field.',
 	},
 	{
 		displayName: 'Fields',
@@ -92,7 +92,7 @@ export const recordFields: INodeProperties[] = [
 				multiKeyMatch: false,
 			},
 		},
-		description: 'Same form as Create Record.',
+		description: 'Same fields as Create.',
 	},
 	{
 		displayName: 'Additional Fields',
@@ -107,14 +107,15 @@ export const recordFields: INodeProperties[] = [
 		},
 		options: [
 			{
-				displayName: 'Expected Updated At',
+				displayName: 'Only If Unchanged Since',
 				name: 'expectedUpdatedAt',
 				type: 'string',
 				default: '',
-				description: 'If someone else changed the record, Cervio returns 409. Usually leave empty.',
+				description:
+					'The record’s updated_at as you read it. If the record changed since then, Cervio refuses the update. Usually left empty.',
 			},
 			{
-				displayName: 'Multi-Value Mode',
+				displayName: 'Multi-Select Fields',
 				name: 'multiValueModes',
 				type: 'fixedCollection',
 				typeOptions: {
@@ -123,7 +124,7 @@ export const recordFields: INodeProperties[] = [
 				default: {},
 				placeholder: 'Add field',
 				description:
-					'For multi_select relation fields: add | replace (API default) | remove. The field must be present in Fields.',
+					'For multi-select relation fields: replace the list (default), add to it, or remove from it. The field must also be set in Fields.',
 				options: [
 					{
 						displayName: 'Field',
@@ -134,16 +135,16 @@ export const recordFields: INodeProperties[] = [
 								name: 'field',
 								type: 'string',
 								default: '',
-								description: 'field_name on the form (e.g. document_controllers)',
+								description: 'Name of the multi-select field, as in Fields.',
 							},
 							{
 								displayName: 'Mode',
 								name: 'mode',
 								type: 'options',
 								options: [
-									{ name: 'Replace', value: 'replace' },
-									{ name: 'Add', value: 'add' },
-									{ name: 'Remove', value: 'remove' },
+									{ name: 'Replace', value: 'replace', description: 'Replace the current list' },
+									{ name: 'Add', value: 'add', description: 'Add to the current list' },
+									{ name: 'Remove', value: 'remove', description: 'Remove from the current list' },
 								],
 								default: 'replace',
 							},
@@ -170,7 +171,7 @@ export const recordFields: INodeProperties[] = [
 				name: 'recordId',
 				type: 'string',
 				default: '',
-				description: 'Optional: merge with already saved data.',
+				description: 'Check the values as changes to this saved record.',
 			},
 		],
 	},
@@ -186,7 +187,8 @@ export const recordFields: INodeProperties[] = [
 			},
 		},
 		placeholder: 'Add filter',
-		description: 'Each filter → filter[field]=eq.value (AND).',
+		description:
+			'Return only records whose field equals the value. With several filters, all must match.',
 		options: [
 			{
 				displayName: 'Filter',
@@ -211,6 +213,7 @@ export const recordFields: INodeProperties[] = [
 	{
 		displayName: 'Limit',
 		name: 'listRecordsLimit',
+		description: 'Maximum number of records, from 1 to 500.',
 		type: 'number',
 		typeOptions: { minValue: 1, maxValue: 500 },
 		default: 50,
@@ -223,6 +226,7 @@ export const recordFields: INodeProperties[] = [
 	{
 		displayName: 'Offset',
 		name: 'listRecordsOffset',
+		description: 'Number of records to skip, to read the next page.',
 		type: 'number',
 		typeOptions: { minValue: 0 },
 		default: 0,
@@ -247,8 +251,7 @@ export const recordFields: INodeProperties[] = [
 				operation: ['listView'],
 			},
 		},
-		description:
-			'This view already carries its filters and columns. Pick another view for a different row set.',
+		description: 'The view to read. Its filters, sorting and columns apply.',
 	},
 	{
 		displayName: 'How Many Rows',
@@ -258,12 +261,12 @@ export const recordFields: INodeProperties[] = [
 			{
 				name: 'First Page',
 				value: 'first',
-				description: 'A single page, up to the chosen limit',
+				description: 'One page, up to Limit Per Page records',
 			},
 			{
 				name: 'All Pages',
 				value: 'all',
-				description: 'The node follows next_cursor automatically (max 10 pages)',
+				description: 'Follow the pages automatically, up to 10',
 			},
 		],
 		default: 'first',
@@ -272,8 +275,7 @@ export const recordFields: INodeProperties[] = [
 				operation: ['listView'],
 			},
 		},
-		description:
-			'First page: 1–500. The response does not include the total. All pages: stops after 5000 rows and flags that the view is longer.',
+		description: 'All Pages reads up to 10 pages and marks the last item when the view has more.',
 	},
 	{
 		displayName: 'Limit Per Page',
@@ -289,14 +291,14 @@ export const recordFields: INodeProperties[] = [
 				operation: ['listView'],
 			},
 		},
-		description: 'From 1 to 500. The response does not include the total.',
+		description: 'Records per page, from 1 to 500.',
 	},
 	{
-		displayName: 'Option Lists',
+		displayName: 'Choice Fields',
 		name: 'optionsMode',
 		type: 'options',
 		options: [
-			{ name: 'Stored Value Only (recommended for Update)', value: 'slugs' },
+			{ name: 'Stored Value (Ready for Update)', value: 'slugs' },
 			{ name: 'Label and ID', value: 'both' },
 			{ name: 'Label Only', value: 'labels' },
 		],
@@ -307,14 +309,14 @@ export const recordFields: INodeProperties[] = [
 			},
 		},
 		description:
-			'Default slugs: ready for Update. “Label and ID” yields {id,label} objects; Update extracts .id when needed.',
+			'How to return choice fields. The stored value can be sent back unchanged with Update.',
 	},
 	{
-		displayName: 'Relations',
+		displayName: 'Relation Fields',
 		name: 'relationsMode',
 		type: 'options',
 		options: [
-			{ name: 'UUID Only (recommended for Update)', value: 'uuids' },
+			{ name: 'Record ID (Ready for Update)', value: 'uuids' },
 			{ name: 'Label and ID', value: 'both' },
 			{ name: 'Label Only', value: 'labels' },
 		],
@@ -325,7 +327,7 @@ export const recordFields: INodeProperties[] = [
 			},
 		},
 		description:
-			'Default uuids: ready for Update. View lookup columns stay labels (not UUIDs): use Search Relation or GET outside the node.',
+			'How to return relation fields. The record ID can be sent back unchanged with Update.',
 	},
 	{
 		displayName: 'Label Locale',
@@ -345,7 +347,7 @@ export const recordFields: INodeProperties[] = [
 				operation: ['listView'],
 			},
 		},
-		description: 'Applies to option-list labels, not field names.',
+		description: 'Language of the choice labels. Field names are not translated.',
 	},
 	{
 		displayName: 'Include Total Count',
@@ -357,7 +359,8 @@ export const recordFields: INodeProperties[] = [
 				operation: ['listView'],
 			},
 		},
-		description: 'One extra request. Enable only if you need the number.',
+		description:
+			'Add the total number of records in the view to each item (_view_count). Costs one more request.',
 	},
 	{
 		displayName: 'Additional Fields',
@@ -376,7 +379,8 @@ export const recordFields: INodeProperties[] = [
 				name: 'cursor',
 				type: 'string',
 				default: '',
-				description: 'Paste next_cursor from a previous run. Empty = start from the first row.',
+				description:
+					'To continue a previous run, paste its _next_cursor. Empty starts from the first record.',
 			},
 		],
 	},

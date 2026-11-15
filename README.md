@@ -9,7 +9,7 @@
 
 Official [n8n](https://n8n.io/) community node for [Cervio](https://cervio.app).
 
-Connect n8n workflows to a Cervio tenant over the public REST API (`/api/v1`): entity records, documents, N:M links, upsert/resolve, workflows, and notifications. Field lists for create/update come from the form write-schema (resource mapper), not a free-form JSON body. The node is marked `usableAsTool: true` (optional REST tool for AI Agent). For the full Cervio MCP tool surface, use n8n’s built-in **MCP Client Tool** — see [AI Agent + Cervio MCP](#ai-agent--cervio-mcp).
+Connect n8n workflows to a Cervio tenant over the public REST API (`/api/v1`): entity records, documents, N:M links, upsert/resolve, workflows, and notifications. Create and Update offer the fields of a Cervio form (resource mapper), not a free-form JSON body. The node is marked `usableAsTool: true` (optional REST tool for AI Agent). For the full Cervio MCP tool surface, use n8n’s built-in **MCP Client Tool** — see [AI Agent + Cervio MCP](#ai-agent--cervio-mcp).
 
 |               |                                                                                          |
 | ------------- | ---------------------------------------------------------------------------------------- |
@@ -94,7 +94,7 @@ Pick a **Resource**, then an **Operation** (node **typeVersion 2** only):
 
 | Resource         | Operation                      | Description                                                 |
 | ---------------- | ------------------------------ | ----------------------------------------------------------- |
-| **Record**       | Create / Update / Get / Delete | CRUD through an assigned form mask                          |
+| **Record**       | Create / Update / Get / Delete | Create, change, read and delete records through a form      |
 |                  | Create or Update (upsert)      | Natural-key create-or-update (`match_field`)                |
 |                  | Validate draft                 | Dry-run formulas / required fields                          |
 |                  | List view                      | Read via an assigned list view (cursor pages)               |
@@ -114,19 +114,19 @@ Pick a **Resource**, then an **Operation** (node **typeVersion 2** only):
 - N:M fields are not on the mapper — use **Link / Unlink** ([N:M links](#nm-links)).
 - Every operation runs **once per input item**, with that item's parameters (List, List view and Search included). To run a list once for many items, turn on the node setting **Execute Once**.
 - Relation dropdowns are capped (~50); use **Search relation** for larger sets.
-- List view defaults: options = slugs, relations = UUIDs (ready for Update).
+- List view returns choice fields as stored values and relation fields as record IDs by default, so the output can go straight into Update.
 - **Start workflow → Additional Data:** Key/Value rows **or** a JSON object (same `data` body Cervio accepts on `POST /api/v1/workflows/:id/runs`, max 64 KiB → `$trigger.data`).
 
 ## N:M links
 
 In Cervio an N:M field is stored in a junction entity, and **each link is one row** of it, with its own ID and optionally its own fields (e.g. year, hours). The same far record can be linked more than once (one row per year, for example); only a uniqueness rule on the junction entity can forbid it.
 
-| Operation          | Input                                                             | Output                                                    |
-| ------------------ | ----------------------------------------------------------------- | --------------------------------------------------------- |
-| **Link Records**   | Record ID, N:M field, Far Record ID, optional **Junction Fields** | `{ junction_record_id, record_id, far_record_id, data? }` |
-| **Unlink Records** | Record ID, N:M field, **Junction Record ID**                      | `{ deleted, junction_record_id, record_id }`              |
+| Operation          | Input                                                         | Output                                                    |
+| ------------------ | ------------------------------------------------------------- | --------------------------------------------------------- |
+| **Link Records**   | Record ID, N:M field, Far Record ID, optional **Link Fields** | `{ junction_record_id, record_id, far_record_id, data? }` |
+| **Unlink Records** | Record ID, N:M field, **Link ID**                             | `{ deleted, junction_record_id, record_id }`              |
 
-- **Junction Fields** lists the junction entity's create form, without the two record keys (Cervio sets them). Required junction fields must be filled, or Cervio answers `missing_required_fields`.
+- **Link Fields** lists the junction entity's create form, without the two record keys (Cervio sets them). Required junction fields must be filled, or Cervio answers `missing_required_fields`.
 - **Unlink** removes exactly one row. Use the `junction_record_id` returned by Link, or list the junction entity (**Record → List** filtered on the record key) to find the row. `deleted: 0` means the row was already removed or belongs to another record, so a retry is safe.
 - Removing "every link to record X" is a loop: list the junction rows for X, then Unlink each.
 

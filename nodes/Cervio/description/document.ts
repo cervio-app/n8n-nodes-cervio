@@ -5,6 +5,7 @@ export const documentFields: INodeProperties[] = [
 	{
 		displayName: 'Document ID',
 		name: 'documentId',
+		description: 'ID of the document, from Document → List.',
 		type: 'string',
 		required: true,
 		default: '',
@@ -25,10 +26,10 @@ export const documentFields: INodeProperties[] = [
 				operation: ['generateDocument'],
 			},
 		},
-		description: 'Document template UUID (no public REST catalog yet).',
+		description: 'ID of the document template in Cervio.',
 	},
 	{
-		displayName: 'Binary Property',
+		displayName: 'Input Binary Field',
 		name: 'binaryPropertyName',
 		type: 'string',
 		default: 'data',
@@ -37,7 +38,7 @@ export const documentFields: INodeProperties[] = [
 				operation: ['uploadDocument'],
 			},
 		},
-		description: 'Binary field on the n8n item to upload as the file.',
+		description: 'Name of the binary field of the input item that holds the file.',
 	},
 	{
 		displayName: 'Upload Options',
@@ -54,6 +55,7 @@ export const documentFields: INodeProperties[] = [
 			{
 				displayName: 'Title',
 				name: 'title',
+				description: 'Document title shown in Cervio.',
 				type: 'string',
 				default: '',
 			},
@@ -62,7 +64,7 @@ export const documentFields: INodeProperties[] = [
 				name: 'fileName',
 				type: 'string',
 				default: '',
-				description: 'Default: name from the binary or upload.bin',
+				description: 'Default: the name of the input file, or upload.bin.',
 			},
 		],
 	},

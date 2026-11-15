@@ -17,8 +17,7 @@ export const relationFields: INodeProperties[] = [
 				operation: ['searchRelation'],
 			},
 		},
-		description:
-			'Relation field on the form (including multi-select). Does not include N:M through fields.',
+		description: 'The relation field whose possible records you want. N:M fields are not listed.',
 	},
 	{
 		displayName: 'Search',
@@ -30,7 +29,7 @@ export const relationFields: INodeProperties[] = [
 				operation: ['searchRelation'],
 			},
 		},
-		description: 'Free text passed to relation-options?q=. Empty = first results.',
+		description: 'Text to search for. Empty returns the first records.',
 	},
 	{
 		displayName: 'Limit',
@@ -46,7 +45,7 @@ export const relationFields: INodeProperties[] = [
 				operation: ['searchRelation'],
 			},
 		},
-		description: 'From 1 to 100 (Cervio API cap).',
+		description: 'Maximum number of records, from 1 to 100.',
 	},
 	{
 		displayName: 'N:M Field',
@@ -63,7 +62,8 @@ export const relationFields: INodeProperties[] = [
 				operation: ['linkRecords', 'unlinkRecords'],
 			},
 		},
-		description: 'N:M field on the form. Each link is one row of its junction entity.',
+		description:
+			'The N:M field. Each link is a row of its own, with an ID and optional link fields.',
 	},
 	{
 		displayName: 'Far Record ID',
@@ -80,7 +80,7 @@ export const relationFields: INodeProperties[] = [
 			'Record to link on the other side of the N:M field. Linking it again adds another row (e.g. one per year), unless the junction has a uniqueness rule.',
 	},
 	{
-		displayName: 'Junction Fields',
+		displayName: 'Link Fields',
 		name: 'junctionFields',
 		type: 'resourceMapper',
 		default: {
@@ -108,10 +108,10 @@ export const relationFields: INodeProperties[] = [
 			},
 		},
 		description:
-			'Other fields of the link row (e.g. year, hours). Required ones must be filled. The two linked records are set by Cervio.',
+			'Other fields of the link, e.g. year or hours. Required ones must be filled. Cervio sets the two linked records itself.',
 	},
 	{
-		displayName: 'Junction Record ID',
+		displayName: 'Link ID',
 		name: 'junctionRecordId',
 		type: 'string',
 		required: true,
@@ -122,7 +122,7 @@ export const relationFields: INodeProperties[] = [
 			},
 		},
 		description:
-			'ID of the link row to remove, e.g. {{ $json.junction_record_id }} from Link Records, or the ID of a row listed from the junction entity. Other rows with the same far record are kept.',
+			'ID of the link to remove, e.g. {{ $json.junction_record_id }} from Link Records. Other links to the same record are kept.',
 	},
 	{
 		displayName: 'Values to Resolve',
@@ -135,8 +135,7 @@ export const relationFields: INodeProperties[] = [
 				operation: ['resolveRelation'],
 			},
 		},
-		description:
-			'JSON array ["a","b"] or comma-separated values. Optional field_name under Options.',
+		description: 'Values to look up, as a JSON array ["A1","B2"] or separated by commas.',
 	},
 	{
 		displayName: 'Resolve Options',
@@ -151,12 +150,12 @@ export const relationFields: INodeProperties[] = [
 		},
 		options: [
 			{
-				displayName: 'Relation Field Name',
+				displayName: 'Through Relation Field',
 				name: 'fieldName',
 				type: 'string',
 				default: '',
 				description:
-					'If set, resolve against the relation field target instead of the current entity.',
+					'Look the values up in the entity this relation field points to, instead of this entity.',
 			},
 		],
 	},

@@ -107,12 +107,12 @@ async function mapperFieldsWithRelationOptions(
 					.join('; ');
 				appendDescription(
 					field,
-					`Candidate preview: ${preview}${records.length > 8 ? '…' : ''}. Use “Search Relation” to filter.`,
+					`For example: ${preview}${records.length > 8 ? '…' : ''}. To find others, use Relation → Search.`,
 				);
 			} else if (records.length >= RELATION_DROPDOWN_LIMIT) {
 				appendDescription(
 					field,
-					`≥${RELATION_DROPDOWN_LIMIT} candidates: use “Search Relation” (q + limit up to ${RELATION_SEARCH_MAX_LIMIT}), then UUID[] in Fields.`,
+					`${RELATION_DROPDOWN_LIMIT} or more possible records: find their IDs with Relation → Search (up to ${RELATION_SEARCH_MAX_LIMIT} per search).`,
 				);
 			}
 			continue;
@@ -124,7 +124,7 @@ async function mapperFieldsWithRelationOptions(
 		} else if (records.length >= RELATION_DROPDOWN_LIMIT) {
 			appendDescription(
 				field,
-				`Too many records for the dropdown (cap ${RELATION_DROPDOWN_LIMIT}): use “Search Relation” or paste the UUID.`,
+				`Too many records for a list (${RELATION_DROPDOWN_LIMIT} or more): find the ID with Relation → Search.`,
 			);
 		}
 	}

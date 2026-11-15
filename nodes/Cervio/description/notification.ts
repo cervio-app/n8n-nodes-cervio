@@ -13,7 +13,7 @@ export const notificationFields: INodeProperties[] = [
 				operation: ['notifySelf', 'notifyUsers'],
 			},
 		},
-		description: 'Notification title (max 200 characters).',
+		description: 'Up to 200 characters.',
 	},
 	{
 		displayName: 'Body',
@@ -26,10 +26,10 @@ export const notificationFields: INodeProperties[] = [
 				operation: ['notifySelf', 'notifyUsers'],
 			},
 		},
-		description: 'Optional body text (max 2000 characters).',
+		description: 'Optional text, up to 2000 characters.',
 	},
 	{
-		displayName: 'Link (href)',
+		displayName: 'Link',
 		name: 'notificationHref',
 		type: 'string',
 		default: '',
@@ -38,11 +38,12 @@ export const notificationFields: INodeProperties[] = [
 				operation: ['notifySelf', 'notifyUsers'],
 			},
 		},
-		description: 'Optional deep link path inside the Cervio app (max 500 characters).',
+		description: 'Optional page of the Cervio app to open, e.g. /my-tasks (up to 500 characters).',
 	},
 	{
 		displayName: 'Category',
 		name: 'notificationCategory',
+		description: 'Where the notification is filed in Cervio.',
 		type: 'options',
 		options: [
 			{ name: 'Plugin', value: 'plugin' },
@@ -68,7 +69,8 @@ export const notificationFields: INodeProperties[] = [
 				operation: ['notifySelf', 'notifyUsers'],
 			},
 		},
-		description: 'Optional source_type for audit / grouping (max 100 characters).',
+		description:
+			'Optional label that groups notifications from the same source (up to 100 characters).',
 	},
 	{
 		displayName: 'Source ID',
@@ -80,7 +82,8 @@ export const notificationFields: INodeProperties[] = [
 				operation: ['notifySelf', 'notifyUsers'],
 			},
 		},
-		description: 'Optional idempotency key per user (max 200 characters).',
+		description:
+			'Optional key: a notification with a key already sent to a user is not sent again (up to 200 characters).',
 	},
 	{
 		displayName: 'User IDs',
@@ -105,12 +108,11 @@ export const notificationFields: INodeProperties[] = [
 						name: 'id',
 						type: 'string',
 						default: '',
-						description: 'Organization member UUID',
+						description: 'User ID in Cervio',
 					},
 				],
 			},
 		],
-		description:
-			'Recipients in this organization (max 50). Outside-org IDs are ignored by the API.',
+		description: 'Users to notify, up to 50. IDs of users outside the organization are ignored.',
 	},
 ];
