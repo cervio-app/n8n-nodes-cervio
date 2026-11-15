@@ -63,8 +63,15 @@ async function sendCervioRequest(
 		) => Promise<unknown>;
 		return await send.call(this, 'cervioApi', request);
 	} catch (error) {
+		// n8n may already raise a NodeApiError here; its constructor then returns that
+		// same error and ignores options, so the Cervio message is set on it directly.
+		const apiError = new NodeApiError(this.getNode(), error as JsonObject);
 		const message = cervioErrorMessage(error);
-		throw new NodeApiError(this.getNode(), error as JsonObject, message ? { message } : {});
+		if (message) {
+			apiError.message = message;
+			if (apiError.description === message) apiError.description = undefined;
+		}
+		throw apiError;
 	}
 }
 
@@ -78,11 +85,18 @@ export function cervioErrorMessage(error: unknown): string | undefined {
 		response?: { data?: unknown };
 		cause?: { response?: { data?: unknown } };
 		reason?: { response?: { data?: unknown } };
+		context?: { data?: unknown };
 		error?: unknown;
 	} | null;
-	// axios-style errors carry the body in response.data; `request` errors in `error`.
+	// Where the body sits depends on who raised the error: axios (response.data),
+	// n8n's own NodeApiError from httpRequestWithAuthentication (context.data, in
+	// installed packages) or the legacy `request` helper (error).
 	const data =
-		e?.response?.data ?? e?.cause?.response?.data ?? e?.reason?.response?.data ?? e?.error;
+		e?.response?.data ??
+		e?.cause?.response?.data ??
+		e?.reason?.response?.data ??
+		e?.context?.data ??
+		e?.error;
 	if (!data || typeof data !== 'object') return undefined;
 	const { message, error: code } = data as { message?: unknown; error?: unknown };
 	if (typeof message === 'string' && message.trim()) return message.trim();

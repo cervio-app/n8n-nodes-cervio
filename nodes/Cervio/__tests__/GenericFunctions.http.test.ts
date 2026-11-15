@@ -92,6 +92,49 @@ describe('cervioApiRequest', () => {
 		expect((error as NodeApiError).httpCode).toBe('400');
 	});
 
+	it('reads the Cervio message from the error n8n raises in installed packages', async () => {
+		const ctx = mockCtx({
+			http: vi.fn(async () => {
+				throw new NodeApiError(
+					{ name: 'Cervio' } as never,
+					{
+						message: 'Request failed with status code 400',
+						response: {
+							status: 400,
+							data: {
+								error: 'missing_required_fields',
+								message: 'Missing required junction fields: anno',
+							},
+						},
+					} as never,
+				);
+			}),
+		});
+		const error = await cervioApiRequest
+			.call(ctx as never, 'POST', '/x', {})
+			.catch((e: unknown) => e);
+		expect((error as NodeApiError).message).toBe('Missing required junction fields: anno');
+	});
+
+	it('keeps a different description next to the Cervio message', async () => {
+		const ctx = mockCtx({
+			http: vi.fn(async () => {
+				throw {
+					message: 'Request failed with status code 409',
+					description: 'The record is being edited by someone else.',
+					response: { status: 409, data: { error: 'edit_lock_held' } },
+				};
+			}),
+		});
+		const error = (await cervioApiRequest
+			.call(ctx as never, 'PATCH', '/x', {})
+			.catch((e: unknown) => e)) as NodeApiError;
+		expect([error.message, error.description]).toEqual([
+			'edit_lock_held',
+			'The record is being edited by someone else.',
+		]);
+	});
+
 	it('falls back to the error code, then to n8n’s own message', () => {
 		expect(cervioErrorMessage({ response: { data: { error: 'edit_lock_held' } } })).toBe(
 			'edit_lock_held',

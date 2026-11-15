@@ -116,6 +116,7 @@ describe('API helpers', () => {
 		);
 		expect(cervioErrorMessage({ response: { data: { error: ' ' } } })).toBeUndefined();
 		expect(cervioErrorMessage({ error: { message: 'from request' } })).toBe('from request');
+		expect(cervioErrorMessage({ context: { data: { message: 'from n8n' } } })).toBe('from n8n');
 		expect(cervioErrorMessage({ reason: { response: { data: { message: 'from reason' } } } })).toBe(
 			'from reason',
 		);
