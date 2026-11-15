@@ -252,15 +252,14 @@ describe('List View', () => {
 });
 
 describe('documents, workflows, notifications', () => {
-	it('lists an empty record as one marker item', async () => {
+	it('lists no items for a record without documents', async () => {
 		const ctx = mockExecute({
 			resource: 'document',
 			operation: 'listDocuments',
 			entityId: 'ent',
 			recordId: 'rec',
 		});
-		const [[item]] = await executeCervio.call(ctx);
-		expect(item.json).toEqual({ _empty: true, record_id: 'rec' });
+		expect(await executeCervio.call(ctx)).toEqual([[]]);
 	});
 
 	it('uploads the item binary with its file name and type', async () => {
@@ -298,15 +297,26 @@ describe('documents, workflows, notifications', () => {
 		expect(item.json).toEqual({ invocation_id: 'inv-1' });
 	});
 
-	it('notifies unique valid users', async () => {
+	it('notifies each user once', async () => {
 		const u = '55555555-5555-4555-8555-555555555555';
 		const ctx = mockExecute({
 			resource: 'notification',
 			operation: 'notifyUsers',
 			notificationTitle: 'Ciao',
-			notificationUserIds: { user: [{ id: u }, { id: u }, { id: 'nope' }] },
+			notificationUserIds: { user: [{ id: u }, { id: ` ${u} ` }, { id: '' }] },
 		});
 		await executeCervio.call(ctx);
 		expect(notifyUsers).toHaveBeenCalledWith([u], { title: 'Ciao', category: 'plugin' });
+	});
+
+	it('names the user IDs that are not valid instead of dropping them', async () => {
+		const ctx = mockExecute({
+			resource: 'notification',
+			operation: 'notifyUsers',
+			notificationTitle: 'Ciao',
+			notificationUserIds: { user: { id: 'mario' } },
+		});
+		await expect(executeCervio.call(ctx)).rejects.toThrow('User IDs must be UUIDs: "mario".');
+		expect(notifyUsers).not.toHaveBeenCalled();
 	});
 });

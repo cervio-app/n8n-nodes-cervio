@@ -13,9 +13,8 @@ export const documentOperations: Record<string, OperationHandler> = {
 	async listDocuments(i) {
 		const entityId = this.getNodeParameter('entityId', i) as string;
 		const recordId = requireRecordId(this, i);
-		const docs = await listRecordDocuments.call(this, entityId, recordId);
-		// One item even when empty, so the record stays visible downstream.
-		return docs.length > 0 ? (docs as IDataObject[]) : [{ _empty: true, record_id: recordId }];
+		// No documents → no items (turn on "Always Output Data" to keep the flow going).
+		return (await listRecordDocuments.call(this, entityId, recordId)) as IDataObject[];
 	},
 
 	async openDocument(i) {

@@ -19,9 +19,13 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
  * Path segment for a Cervio id. Ids often come from expressions, so they are
  * checked here: a value that is not a UUID never reaches the URL.
  */
+export function isUuid(value: string): boolean {
+	return UUID_RE.test(value);
+}
+
 export function idSegment(value: string, label: string): string {
 	const id = String(value ?? '').trim();
-	if (!UUID_RE.test(id)) {
+	if (!isUuid(id)) {
 		throw new Error(`${label} must be a UUID, got "${id.slice(0, 60)}".`);
 	}
 	return id;

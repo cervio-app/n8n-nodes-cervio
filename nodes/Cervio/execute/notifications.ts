@@ -1,7 +1,7 @@
 import type { IDataObject, IExecuteFunctions } from 'n8n-workflow';
 import { NodeOperationError } from 'n8n-workflow';
 
-import { notifySelf, notifyUsers, type CervioNotifyPayload } from '../GenericFunctions';
+import { isUuid, notifySelf, notifyUsers, type CervioNotifyPayload } from '../GenericFunctions';
 import { optionalString } from './parameters';
 import type { OperationHandler } from './types';
 
@@ -37,21 +37,24 @@ function readUserIds(ctx: IExecuteFunctions, itemIndex: number): string[] {
 		user?: Array<{ id?: string }> | { id?: string };
 	};
 	const rows = Array.isArray(raw.user) ? raw.user : raw.user ? [raw.user] : [];
-	const ids = rows
-		.map((r) => String(r?.id ?? '').trim())
-		.filter((id) => /^[0-9a-f-]{36}$/i.test(id));
-	const unique = [...new Set(ids)];
-	if (unique.length === 0) {
-		throw new NodeOperationError(ctx.getNode(), 'At least one valid user UUID is required.', {
+	const ids = [...new Set(rows.map((r) => String(r?.id ?? '').trim()).filter(Boolean))];
+	const invalid = ids.filter((id) => !isUuid(id));
+	if (invalid.length > 0) {
+		throw new NodeOperationError(
+			ctx.getNode(),
+			`User IDs must be UUIDs: ${invalid.map((id) => `"${id.slice(0, 60)}"`).join(', ')}.`,
+			{ itemIndex },
+		);
+	}
+	if (ids.length === 0) {
+		throw new NodeOperationError(ctx.getNode(), 'Add at least one user ID.', { itemIndex });
+	}
+	if (ids.length > 50) {
+		throw new NodeOperationError(ctx.getNode(), 'At most 50 users per notification.', {
 			itemIndex,
 		});
 	}
-	if (unique.length > 50) {
-		throw new NodeOperationError(ctx.getNode(), 'At most 50 recipients per request.', {
-			itemIndex,
-		});
-	}
-	return unique;
+	return ids;
 }
 
 export const notificationOperations: Record<string, OperationHandler> = {

@@ -14,6 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Link Records** returns `{ junction_record_id, record_id, far_record_id, data? }`. Linking the same far record again adds another row.
 - Ids used in URL paths (entity, record, view, document, workflow, run) must be UUIDs; anything else is rejected before the request is sent.
 - Errors raised while processing an item carry that item's index.
+- **Breaking:** **Document → List** returns no items for a record without documents (it used to return one `{ _empty: true }` item). Turn on the node setting **Always Output Data** to keep the flow going.
+- **Notify Users** rejects user IDs that are not UUIDs and names them, instead of silently dropping them.
 - API errors show Cervio's own message (e.g. `Missing required junction fields: anno`) instead of n8n's generic text for the HTTP status.
 - Editor texts rewritten for n8n users, without Cervio internals (slugs, write-schema, API paths). Renamed labels, same parameters, so existing workflows keep working: **Through Field (N:M)** → **N:M Field**, **Option Lists** → **Choice Fields**, **Relations** → **Relation Fields**, **Multi-Value Mode** → **Multi-Select Fields**, **Expected Updated At** → **Only If Unchanged Since**, **Binary Property** → **Input Binary Field**, **Record ID (entity_data_id)** → **Record ID**.
 - Source split by resource (`description/*.ts`) and by concern (`execute/parameters.ts`, `execute/workflowData.ts`, `methods/mapperFields.ts`). Code formatted with Prettier, checked in CI.
