@@ -84,3 +84,7 @@ Legacy unscoped name (if still present):
 ```bash
 npm deprecate n8n-nodes-cervio@"*" "Use @cervio/n8n-nodes-cervio instead"
 ```
+
+## End-to-end tests
+
+`npm run e2e` runs the packed node in a local n8n against a Cervio test tenant. See [docs/e2e.md](docs/e2e.md).

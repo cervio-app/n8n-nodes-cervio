@@ -31,6 +31,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Link Records → Link Fields:** fill the other fields of the link row (e.g. year, hours) from the junction entity's create form.
 - Tests cover 100% of statements, branches, functions and lines of the node and credential, enforced in CI; tests are type-checked by `npm run lint`.
 
+### Added (development)
+
+- `npm run e2e`: end-to-end tests of the packed node in a local n8n against a Cervio test tenant ([docs/e2e.md](docs/e2e.md)).
+
 ### Removed
 
 - Per-field hints in the resource mapper: n8n does not display them. The guidance is now in the **Fields** description.
