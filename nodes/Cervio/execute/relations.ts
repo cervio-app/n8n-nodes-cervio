@@ -13,7 +13,7 @@ import {
 	readJunctionFieldData,
 	requireRecordId,
 	requireString,
-} from './helpers';
+} from './parameters';
 import type { OperationHandler } from './types';
 
 export const relationOperations: Record<string, OperationHandler> = {

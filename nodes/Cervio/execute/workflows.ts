@@ -1,7 +1,8 @@
 import type { IDataObject } from 'n8n-workflow';
 
 import { getWorkflowRunStatus, startWorkflowRun } from '../GenericFunctions';
-import { requireString, resolveWorkflowStartData } from './helpers';
+import { requireString } from './parameters';
+import { resolveWorkflowStartData } from './workflowData';
 import type { OperationHandler } from './types';
 
 export const workflowOperations: Record<string, OperationHandler> = {

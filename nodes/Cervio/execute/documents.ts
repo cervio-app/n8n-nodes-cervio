@@ -6,7 +6,7 @@ import {
 	openRecordDocument,
 	uploadRecordDocument,
 } from '../GenericFunctions';
-import { optionalString, requireRecordId, requireString } from './helpers';
+import { optionalString, requireRecordId, requireString } from './parameters';
 import type { OperationHandler } from './types';
 
 export const documentOperations: Record<string, OperationHandler> = {

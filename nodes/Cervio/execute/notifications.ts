@@ -2,7 +2,7 @@ import type { IDataObject, IExecuteFunctions } from 'n8n-workflow';
 import { NodeOperationError } from 'n8n-workflow';
 
 import { notifySelf, notifyUsers, type CervioNotifyPayload } from '../GenericFunctions';
-import { optionalString } from './helpers';
+import { optionalString } from './parameters';
 import type { OperationHandler } from './types';
 
 /** Lengths are capped by Cervio (body 2000, href 500, source fields 100/200). */

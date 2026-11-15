@@ -8,7 +8,7 @@ import {
 	MAX_PAGE_LIMIT,
 	MAX_PAGES,
 } from '../GenericFunctions';
-import { optionalString } from './helpers';
+import { optionalString } from './parameters';
 import type { OperationHandler } from './types';
 
 function pageLimit(raw: unknown): number {

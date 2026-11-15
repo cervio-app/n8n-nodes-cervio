@@ -15,7 +15,7 @@ import {
 	parseMultiValueModes,
 	readMappedFieldData,
 	requireRecordId,
-} from './helpers';
+} from './parameters';
 import type { OperationHandler } from './types';
 
 export const recordOperations: Record<string, OperationHandler> = {

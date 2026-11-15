@@ -6,7 +6,7 @@ import {
 	WORKFLOW_START_DATA_MAX_BYTES,
 	parseWorkflowDataPayload,
 	resolveWorkflowStartData,
-} from '../execute/helpers';
+} from '../execute/workflowData';
 
 function mockCtx(params: Record<string, unknown>): IExecuteFunctions {
 	return {

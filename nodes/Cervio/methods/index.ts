@@ -12,7 +12,7 @@ import {
 	listWorkflows,
 } from '../GenericFunctions';
 import { formLabelWithRole, type WriteDiscoverySchema } from '../writeSchemaMapper';
-import { buildJunctionMapperFields, buildMapperFields } from '../execute/helpers';
+import { buildJunctionMapperFields, buildMapperFields } from './mapperFields';
 
 export const cervioMethods = {
 	loadOptions: {

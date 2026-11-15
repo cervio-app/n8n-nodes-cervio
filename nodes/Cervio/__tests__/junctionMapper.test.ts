@@ -11,7 +11,7 @@ vi.mock('../GenericFunctions', async (importOriginal) => {
 });
 
 import { getWriteSchema, listForms } from '../GenericFunctions';
-import { buildJunctionMapperFields } from '../execute/helpers';
+import { buildJunctionMapperFields } from '../methods/mapperFields';
 import type { WriteDiscoveryField, WriteDiscoverySchema } from '../writeSchemaMapper';
 import { withoutRelationsTo } from '../writeSchemaMapper';
 
