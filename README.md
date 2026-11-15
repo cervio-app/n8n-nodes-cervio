@@ -9,16 +9,16 @@
 
 Official [n8n](https://n8n.io/) community node for [Cervio](https://cervio.app).
 
-Connect n8n workflows to a Cervio tenant over the public REST API (`/api/v1`): entity records, documents, N:M links, upsert/resolve, workflows, and notifications. Field lists for create/update come from the form write-schema (resource mapper), not a free-form JSON body. The node is marked `usableAsTool: true` (optional REST tool for AI Agent). For the full Cervio MCP tool surface, use n8n’s built-in **MCP Client Tool** — see [AI Agent + Cervio MCP](#ai-agent--cervio-mcp).
+Connect n8n workflows to a Cervio tenant over the public REST API (`/api/v1`): entity records, documents, N:M links, upsert/resolve, workflows, and notifications. Create and Update offer the fields of a Cervio form (resource mapper), not a free-form JSON body. The node is marked `usableAsTool: true` (optional REST tool for AI Agent). For the full Cervio MCP tool surface, use n8n’s built-in **MCP Client Tool** — see [AI Agent + Cervio MCP](#ai-agent--cervio-mcp).
 
-| | |
-|--|--|
-| **Website** | [cervio.app](https://cervio.app) |
-| **npm** | [`@cervio/n8n-nodes-cervio`](https://www.npmjs.com/package/@cervio/n8n-nodes-cervio) |
-| **Source** | [github.com/cervio-app/n8n-nodes-cervio](https://github.com/cervio-app/n8n-nodes-cervio) |
-| **Issues** | [GitHub Issues](https://github.com/cervio-app/n8n-nodes-cervio/issues) |
-| **Changelog** | [CHANGELOG.md](./CHANGELOG.md) |
-| **Node type** | `@cervio/n8n-nodes-cervio.cervio` |
+|               |                                                                                          |
+| ------------- | ---------------------------------------------------------------------------------------- |
+| **Website**   | [cervio.app](https://cervio.app)                                                         |
+| **npm**       | [`@cervio/n8n-nodes-cervio`](https://www.npmjs.com/package/@cervio/n8n-nodes-cervio)     |
+| **Source**    | [github.com/cervio-app/n8n-nodes-cervio](https://github.com/cervio-app/n8n-nodes-cervio) |
+| **Issues**    | [GitHub Issues](https://github.com/cervio-app/n8n-nodes-cervio/issues)                   |
+| **Changelog** | [CHANGELOG.md](./CHANGELOG.md)                                                           |
+| **Node type** | `@cervio/n8n-nodes-cervio.cervio`                                                        |
 
 Maintained by **Cervio**. Support: [Issues](https://github.com/cervio-app/n8n-nodes-cervio/issues) or **dev@cervio.app**.
 
@@ -81,10 +81,10 @@ Live API smoke scripts (`npm run smoke*`) are separate — see [CONTRIBUTING.md]
 
 Create a **Cervio API** credential in n8n:
 
-| Field | Example | Notes |
-|-------|---------|--------|
-| **Base URL** | `https://acme.cervio.app` | Tenant host only — required, no default. Must be `http`/`https`. Link-local / cloud-metadata hosts (`169.254.0.0/16`, `metadata.google.internal`, …) are rejected. |
-| **Personal Access Token** | `cpat_…` | From Cervio **Admin → API** |
+| Field                     | Example                   | Notes                                                                                                                                                                                                                           |
+| ------------------------- | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Base URL**              | `https://acme.cervio.app` | Tenant host only — required, no default. Must be `http`/`https`. Link-local and cloud-metadata hosts (`169.254.0.0/16`, `fe80::/10`, `fd00:ec2::254`, `metadata.google.internal`, …) are rejected, also by **Test credential**. |
+| **Personal Access Token** | `cpat_…`                  | From Cervio **Admin → API**                                                                                                                                                                                                     |
 
 All operations use this credential.
 
@@ -92,29 +92,43 @@ All operations use this credential.
 
 Pick a **Resource**, then an **Operation** (node **typeVersion 2** only):
 
-| Resource | Operation | Description |
-|----------|-----------|-------------|
-| **Record** | Create / Update / Get / Delete | CRUD through an assigned form mask |
-| | Create or Update (upsert) | Natural-key create-or-update (`match_field`) |
-| | Validate draft | Dry-run formulas / required fields |
-| | List view | Read via an assigned list view (cursor pages) |
-| | List | Admin entity list with `filter[field]=eq.value` |
-| **Relation** | Search | Browse/search relation candidates (`q`, limit ≤ 100) |
-| | Resolve Key | Match scalar keys → record UUIDs |
-| | Link / Unlink | N:M through-field links |
-| **Document** | List / Upload / Open | Metadata, multipart upload, signed URL |
-| | Generate from Template | Render a mapped document template (admin) |
-| **Workflow** | Start / Get Run Status | Manual start + admin run status |
-| **Notification** | Send to Me | Inbox (+ push if enabled) for the PAT owner |
-| | Notify Users | Up to 50 org members (admin) |
+| Resource         | Operation                      | Description                                                 |
+| ---------------- | ------------------------------ | ----------------------------------------------------------- |
+| **Record**       | Create / Update / Get / Delete | Create, change, read and delete records through a form      |
+|                  | Create or Update (upsert)      | Natural-key create-or-update (`match_field`)                |
+|                  | Validate draft                 | Dry-run formulas / required fields                          |
+|                  | List view                      | Read via an assigned list view (cursor pages)               |
+|                  | List                           | Admin entity list with `filter[field]=eq.value`             |
+| **Relation**     | Search                         | Browse/search relation candidates (`q`, limit ≤ 100)        |
+|                  | Resolve Key                    | Match scalar keys → record UUIDs                            |
+|                  | Link / Unlink                  | Add or remove one N:M link row (see [N:M links](#nm-links)) |
+| **Document**     | List / Upload / Open           | Metadata, multipart upload, signed URL                      |
+|                  | Generate from Template         | Render a mapped document template (admin)                   |
+| **Workflow**     | Start / Get Run Status         | Manual start + admin run status                             |
+| **Notification** | Send to Me                     | Inbox (+ push if enabled) for the PAT owner                 |
+|                  | Notify Users                   | Up to 50 org members (admin)                                |
 
 **Notes**
 
 - **Create / Update / Upsert / Validate:** pick **Entity → Form**, then the resource mapper.
-- N:M **through** fields are not on the mapper — use **Link / Unlink**.
+- N:M fields are not on the mapper — use **Link / Unlink** ([N:M links](#nm-links)).
+- Every operation runs **once per input item**, with that item's parameters (List, List view and Search included). To run a list once for many items, turn on the node setting **Execute Once**.
 - Relation dropdowns are capped (~50); use **Search relation** for larger sets.
-- List view defaults: options = slugs, relations = UUIDs (ready for Update).
+- List view returns choice fields as stored values and relation fields as record IDs by default, so the output can go straight into Update.
 - **Start workflow → Additional Data:** Key/Value rows **or** a JSON object (same `data` body Cervio accepts on `POST /api/v1/workflows/:id/runs`, max 64 KiB → `$trigger.data`).
+
+## N:M links
+
+In Cervio an N:M field is stored in a junction entity, and **each link is one row** of it, with its own ID and optionally its own fields (e.g. year, hours). The same far record can be linked more than once (one row per year, for example); only a uniqueness rule on the junction entity can forbid it.
+
+| Operation          | Input                                                         | Output                                                    |
+| ------------------ | ------------------------------------------------------------- | --------------------------------------------------------- |
+| **Link Records**   | Record ID, N:M field, Far Record ID, optional **Link Fields** | `{ junction_record_id, record_id, far_record_id, data? }` |
+| **Unlink Records** | Record ID, N:M field, **Link ID**                             | `{ deleted, junction_record_id, record_id }`              |
+
+- **Link Fields** lists the junction entity's create form, without the two record keys (Cervio sets them). Required junction fields must be filled, or Cervio answers `missing_required_fields`.
+- **Unlink** removes exactly one row. Use the `junction_record_id` returned by Link, or list the junction entity (**Record → List** filtered on the record key) to find the row. `deleted: 0` means the row was already removed or belongs to another record, so a retry is safe.
+- Removing "every link to record X" is a loop: list the junction rows for X, then Unlink each.
 
 ## Permissions
 
@@ -130,13 +144,13 @@ n8n  ──Bearer cpat_…──►  1) PAT scopes (Admin → API)
 
 ### Token scopes
 
-| Scope | Used for |
-|-------|----------|
-| `records:read` | Get, List view/records, Search/Resolve, List/Open documents |
+| Scope           | Used for                                                                      |
+| --------------- | ----------------------------------------------------------------------------- |
+| `records:read`  | Get, List view/records, Search/Resolve, List/Open documents                   |
 | `records:write` | Create, Update, Delete, Upsert, Validate, Upload, Link/Unlink, Start workflow |
-| `admin:read` | Form / view / workflow dropdowns, Get workflow run |
-| `admin:write` | Generate document from template; **Notify Users** |
-| `me:write` | **Send to Me** (self notification) |
+| `admin:read`    | Form / view / workflow dropdowns, Get workflow run                            |
+| `admin:write`   | Generate document from template; **Notify Users**                             |
+| `me:write`      | **Send to Me** (self notification)                                            |
 
 `*:write` implies the matching `*:read`. Scopes alone do **not** grant row access or `can_create`. Org notifications must be enabled or Cervio returns `403 notifications_disabled`.
 
@@ -144,10 +158,10 @@ n8n  ──Bearer cpat_…──►  1) PAT scopes (Admin → API)
 
 The PAT impersonates its owner (entity permissions, record policies, field denials, form/view assignments, document capabilities, manual-workflow trigger ACL) — same as the UI.
 
-| Setup | PAT owner | Scopes |
-|-------|-----------|--------|
-| Full guided UX | `system_admin` | `admin:read`, `admin:write`, `records:read`, `records:write`, `me:write` |
-| Narrow sync | Service user with entity ACL + assigned views/forms | `records:read` / `records:write` only |
+| Setup          | PAT owner                                           | Scopes                                                                   |
+| -------------- | --------------------------------------------------- | ------------------------------------------------------------------------ |
+| Full guided UX | `system_admin`                                      | `admin:read`, `admin:write`, `records:read`, `records:write`, `me:write` |
+| Narrow sync    | Service user with entity ACL + assigned views/forms | `records:read` / `records:write` only                                    |
 
 ## AI Agent + Cervio MCP
 
@@ -168,12 +182,12 @@ We intentionally do **not** ship a wrapper MCP client here: n8n owns transport a
 
 ## Compatibility
 
-| | |
-|--|--|
-| n8n | Community nodes API v1 (`n8nNodesApiVersion: 1`); local Compose pin `n8nio/n8n:2.47.2` |
-| Node.js | ≥ 20 (build / smoke); CI uses Node 22 |
-| Cervio | Tenant with `/api/v1` and External API enabled |
-| Node typeVersion | **2** only (Resource + Operation) |
+|                  |                                                                                        |
+| ---------------- | -------------------------------------------------------------------------------------- |
+| n8n              | Community nodes API v1 (`n8nNodesApiVersion: 1`); local Compose pin `n8nio/n8n:2.47.2` |
+| Node.js          | ≥ 20 (build / smoke); CI uses Node 22                                                  |
+| Cervio           | Tenant with `/api/v1` and External API enabled                                         |
+| Node typeVersion | **2** only (Resource + Operation)                                                      |
 
 ## Development
 

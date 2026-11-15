@@ -13,23 +13,14 @@ import {
 } from '../writeSchemaMapper';
 
 const fixture = JSON.parse(
-	readFileSync(
-		join(__dirname, 'fixtures/testmcp-write-schema.json'),
-		'utf8',
-	),
+	readFileSync(join(__dirname, 'fixtures/testmcp-write-schema.json'), 'utf8'),
 ) as WriteDiscoverySchema;
 
 describe('writeSchemaToMapperFields (TESTMCP)', () => {
 	it('maps writable fields and skips computed / readonly / through', () => {
 		const fields = writeSchemaToMapperFields(fixture, 'create');
 		const ids = fields.map((f) => f.id);
-		expect(ids).toEqual([
-			'nome',
-			'data_inizio',
-			'data_fine',
-			'stato',
-			'budget',
-		]);
+		expect(ids).toEqual(['nome', 'data_inizio', 'data_fine', 'stato', 'budget']);
 		expect(ids).not.toContain('calcolato');
 		expect(ids).not.toContain('solo_lettura');
 		expect(ids).not.toContain('link_nm');
@@ -101,10 +92,7 @@ describe('pickCompiledFieldValues', () => {
 		).toEqual({
 			stato: 'In corso',
 			sede_id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
-			controllers: [
-				'11111111-1111-1111-1111-111111111111',
-				'22222222-2222-2222-2222-222222222222',
-			],
+			controllers: ['11111111-1111-1111-1111-111111111111', '22222222-2222-2222-2222-222222222222'],
 		});
 	});
 });
@@ -116,10 +104,7 @@ describe('coerceWriteValue', () => {
 			coerceWriteValue(
 				'11111111-1111-1111-1111-111111111111, 22222222-2222-2222-2222-222222222222',
 			),
-		).toEqual([
-			'11111111-1111-1111-1111-111111111111',
-			'22222222-2222-2222-2222-222222222222',
-		]);
+		).toEqual(['11111111-1111-1111-1111-111111111111', '22222222-2222-2222-2222-222222222222']);
 	});
 });
 
@@ -180,8 +165,8 @@ describe('formLabelWithRole', () => {
 				is_default_view: true,
 			}),
 		).toBe('TESTMCP (edit, create)');
-		expect(
-			formLabelWithRole({ name: 'other', label: 'Other', is_default: true }),
-		).toBe('Other (create)');
+		expect(formLabelWithRole({ name: 'other', label: 'Other', is_default: true })).toBe(
+			'Other (create)',
+		);
 	});
 });

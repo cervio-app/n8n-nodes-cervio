@@ -1,20 +1,13 @@
-import type { IDataObject, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
-import { NodeApiError, NodeOperationError } from 'n8n-workflow';
+import type { IDataObject, IExecuteFunctions } from 'n8n-workflow';
+import { NodeOperationError } from 'n8n-workflow';
 
-import { notifySelf, notifyUsers } from '../GenericFunctions';
+import { isUuid, notifySelf, notifyUsers, type CervioNotifyPayload } from '../GenericFunctions';
+import { optionalString } from './parameters';
+import type { OperationHandler } from './types';
 
-function readNotifyPayload(
-	ctx: IExecuteFunctions,
-	itemIndex: number,
-): {
-	title: string;
-	body?: string;
-	href?: string;
-	category?: string;
-	source_type?: string;
-	source_id?: string;
-} {
-	const title = (ctx.getNodeParameter('notificationTitle', itemIndex) as string)?.trim();
+/** Lengths are capped by Cervio (body 2000, href 500, source fields 100/200). */
+function readNotifyPayload(ctx: IExecuteFunctions, itemIndex: number): CervioNotifyPayload {
+	const title = optionalString(ctx.getNodeParameter('notificationTitle', itemIndex));
 	if (!title) {
 		throw new NodeOperationError(ctx.getNode(), 'Title is required.', { itemIndex });
 	}
@@ -23,31 +16,19 @@ function readNotifyPayload(
 			itemIndex,
 		});
 	}
-
-	const body = (ctx.getNodeParameter('notificationBody', itemIndex, '') as string)?.trim();
-	const href = (ctx.getNodeParameter('notificationHref', itemIndex, '') as string)?.trim();
-	const category = (ctx.getNodeParameter('notificationCategory', itemIndex, 'plugin') as string)
-		?.trim();
-	const sourceType = (
-		ctx.getNodeParameter('notificationSourceType', itemIndex, '') as string
-	)?.trim();
-	const sourceId = (
-		ctx.getNodeParameter('notificationSourceId', itemIndex, '') as string
-	)?.trim();
-
-	const payload: {
-		title: string;
-		body?: string;
-		href?: string;
-		category?: string;
-		source_type?: string;
-		source_id?: string;
-	} = { title, category: category || 'plugin' };
-
-	if (body) payload.body = body.slice(0, 2000);
-	if (href) payload.href = href.slice(0, 500);
-	if (sourceType) payload.source_type = sourceType.slice(0, 100);
-	if (sourceId) payload.source_id = sourceId.slice(0, 200);
+	const payload: CervioNotifyPayload = {
+		title,
+		category:
+			optionalString(ctx.getNodeParameter('notificationCategory', itemIndex, 'plugin')) ?? 'plugin',
+	};
+	const body = optionalString(ctx.getNodeParameter('notificationBody', itemIndex, ''));
+	const href = optionalString(ctx.getNodeParameter('notificationHref', itemIndex, ''));
+	const sourceType = optionalString(ctx.getNodeParameter('notificationSourceType', itemIndex, ''));
+	const sourceId = optionalString(ctx.getNodeParameter('notificationSourceId', itemIndex, ''));
+	if (body) payload.body = body;
+	if (href) payload.href = href;
+	if (sourceType) payload.source_type = sourceType;
+	if (sourceId) payload.source_id = sourceId;
 	return payload;
 }
 
@@ -56,72 +37,33 @@ function readUserIds(ctx: IExecuteFunctions, itemIndex: number): string[] {
 		user?: Array<{ id?: string }> | { id?: string };
 	};
 	const rows = Array.isArray(raw.user) ? raw.user : raw.user ? [raw.user] : [];
-	const ids = rows
-		.map((r) => String(r?.id ?? '').trim())
-		.filter((id) => /^[0-9a-f-]{36}$/i.test(id));
-	const unique = [...new Set(ids)];
-	if (unique.length === 0) {
+	const ids = [...new Set(rows.map((r) => String(r?.id ?? '').trim()).filter(Boolean))];
+	const invalid = ids.filter((id) => !isUuid(id));
+	if (invalid.length > 0) {
 		throw new NodeOperationError(
 			ctx.getNode(),
-			'At least one valid user UUID is required.',
+			`User IDs must be UUIDs: ${invalid.map((id) => `"${id.slice(0, 60)}"`).join(', ')}.`,
 			{ itemIndex },
 		);
 	}
-	if (unique.length > 50) {
-		throw new NodeOperationError(
-			ctx.getNode(),
-			'At most 50 recipients per request.',
-			{ itemIndex },
-		);
+	if (ids.length === 0) {
+		throw new NodeOperationError(ctx.getNode(), 'Add at least one user ID.', { itemIndex });
 	}
-	return unique;
+	if (ids.length > 50) {
+		throw new NodeOperationError(ctx.getNode(), 'At most 50 users per notification.', {
+			itemIndex,
+		});
+	}
+	return ids;
 }
 
-export async function executeNotificationOperations(
-	this: IExecuteFunctions,
-	items: INodeExecutionData[],
-	operation: string,
-	returnData: INodeExecutionData[],
-): Promise<void> {
-	for (let i = 0; i < items.length; i++) {
-		try {
-			const payload = readNotifyPayload(this, i);
-			let result: unknown;
-			if (operation === 'notifySelf') {
-				result = await notifySelf.call(this, payload);
-			} else if (operation === 'notifyUsers') {
-				const userIds = readUserIds(this, i);
-				result = await notifyUsers.call(this, userIds, payload);
-			} else {
-				throw new NodeOperationError(
-					this.getNode(),
-					`Unsupported notification operation: ${operation}`,
-					{ itemIndex: i },
-				);
-			}
-			returnData.push({
-				json: result as IDataObject,
-				pairedItem: { item: i },
-			});
-		} catch (error) {
-			if (this.continueOnFail()) {
-				returnData.push({
-					json: {
-						error: error instanceof Error ? error.message : String(error),
-					},
-					pairedItem: { item: i },
-				});
-				continue;
-			}
-			if (error instanceof NodeOperationError || error instanceof NodeApiError) {
-				// eslint-disable-next-line @n8n/community-nodes/require-node-api-error -- preserve subclass
-				throw error;
-			}
-			throw new NodeOperationError(
-				this.getNode(),
-				error instanceof Error ? error.message : String(error),
-				{ itemIndex: i },
-			);
-		}
-	}
-}
+export const notificationOperations: Record<string, OperationHandler> = {
+	async notifySelf(i) {
+		return (await notifySelf.call(this, readNotifyPayload(this, i))) as IDataObject;
+	},
+
+	async notifyUsers(i) {
+		const payload = readNotifyPayload(this, i);
+		return (await notifyUsers.call(this, readUserIds(this, i), payload)) as IDataObject;
+	},
+};
