@@ -31,7 +31,7 @@ export const recordFields: INodeProperties[] = [
 			},
 		},
 		description:
-			'Fields that Cervio calculates are not listed: it fills them when saving. Use “Add all fields” to start from the whole form.',
+			'Fields that Cervio calculates are not listed: it fills them when saving. Use “Add all fields” to start from the whole form. Relation fields take record IDs: pick from the list when one is offered, otherwise find IDs with Relation → Search. Multi-select relations take several IDs, as a list or separated by commas.',
 	},
 	{
 		displayName: 'Fields',
@@ -62,7 +62,7 @@ export const recordFields: INodeProperties[] = [
 			},
 		},
 		description:
-			'Only the fields you set are changed; the others keep their value. Set at least one field.',
+			'Only the fields you set are changed; the others keep their value. Set at least one field. Relation fields take record IDs: pick from the list when one is offered, otherwise find IDs with Relation → Search. Multi-select relations take several IDs, as a list or separated by commas.',
 	},
 	{
 		displayName: 'Fields',

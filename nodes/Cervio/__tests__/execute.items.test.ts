@@ -28,6 +28,8 @@ import {
 	unlinkThroughRecord,
 	uploadRecordDocument,
 } from '../GenericFunctions';
+import type { IExecuteFunctions } from 'n8n-workflow';
+
 import { executeCervio } from '../execute';
 
 type Params = Record<string, unknown | ((itemIndex: number) => unknown)>;
@@ -51,7 +53,7 @@ function mockExecute(
 		continueOnFail: () => opts.continueOnFail ?? false,
 		helpers: { getBinaryDataBuffer: vi.fn(async () => Buffer.from('pdf')) },
 	};
-	return ctx as unknown as Parameters<typeof executeCervio>[0];
+	return ctx as unknown as IExecuteFunctions;
 }
 
 beforeEach(() => {

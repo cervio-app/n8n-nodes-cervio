@@ -10,6 +10,8 @@ vi.mock('../GenericFunctions', async (importOriginal) => {
 });
 
 import { createRecord } from '../GenericFunctions';
+import type { IExecuteFunctions } from 'n8n-workflow';
+
 import { executeCervio } from '../execute';
 
 function mockExecute(params: Record<string, unknown>, opts?: { typeVersion?: number }) {
@@ -22,7 +24,7 @@ function mockExecute(params: Record<string, unknown>, opts?: { typeVersion?: num
 		getNode: () => ({ name: 'Cervio', typeVersion: opts?.typeVersion ?? 2 }),
 		continueOnFail: () => false,
 	};
-	return ctx as unknown as Parameters<typeof executeCervio>[0];
+	return ctx as unknown as IExecuteFunctions;
 }
 
 describe('executeCervio create', () => {

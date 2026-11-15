@@ -33,14 +33,15 @@ export function readMappedFieldData(
 	itemIndex: number,
 ): IDataObject {
 	const mappingMode = ctx.getNodeParameter('fields.mappingMode', itemIndex) as string;
-	let rawFields: IDataObject = {};
-	if (mappingMode === 'defineBelow') {
-		rawFields = ctx.getNodeParameter('fields.value', itemIndex, {}) as IDataObject;
-	} else if (mappingMode === 'autoMapInputData') {
-		rawFields = { ...items[itemIndex].json } as IDataObject;
-		delete rawFields.id;
+	if (mappingMode === 'autoMapInputData') {
+		// Map the input item as is, except its own id (that is the record, not a field).
+		const fields = { ...items[itemIndex].json };
+		delete fields.id;
+		return pickCompiledFieldData(fields);
 	}
-	return pickCompiledFieldData(rawFields);
+	return pickCompiledFieldData(
+		(ctx.getNodeParameter('fields.value', itemIndex, {}) as IDataObject | null) ?? {},
+	);
 }
 
 /** Other junction fields for Link Records (Junction Fields mapper, defined below only). */
@@ -59,14 +60,15 @@ export function parseResolveValues(
 		throw new NodeOperationError(ctx.getNode(), 'Values to resolve are required.', { itemIndex });
 	}
 	if (trimmed.startsWith('[')) {
-		let parsed: unknown;
+		let parsed: unknown[];
 		try {
-			parsed = JSON.parse(trimmed) as unknown;
+			parsed = JSON.parse(trimmed) as unknown[]; // starts with "[": parses to an array or throws
 		} catch {
-			throw new NodeOperationError(ctx.getNode(), 'Invalid values JSON.', { itemIndex });
-		}
-		if (!Array.isArray(parsed)) {
-			throw new NodeOperationError(ctx.getNode(), 'Values JSON must be an array.', { itemIndex });
+			throw new NodeOperationError(
+				ctx.getNode(),
+				'Values to resolve must be a JSON array or a comma-separated list.',
+				{ itemIndex },
+			);
 		}
 		return parsed.map((v) => String(v).trim()).filter(Boolean);
 	}

@@ -32,6 +32,11 @@ function mockCtx(
 	};
 }
 
+/** The request options of the n-th call to httpRequestWithAuthentication. */
+function requestOf(http: ReturnType<typeof vi.fn>, call = 0): Record<string, unknown> {
+	return (http.mock.calls[call] as unknown[])[1] as Record<string, unknown>;
+}
+
 describe('cervioApiRequest', () => {
 	beforeEach(() => {
 		vi.restoreAllMocks();
@@ -189,7 +194,7 @@ describe('N:M links', () => {
 			FAR,
 			{},
 		);
-		expect(http.mock.calls[0][1].body).toEqual({ from_record_id: RECORD, far_record_id: FAR });
+		expect(requestOf(http).body).toEqual({ from_record_id: RECORD, far_record_id: FAR });
 	});
 
 	it('Unlink removes one junction row by id', async () => {
@@ -232,6 +237,6 @@ describe('multipart', () => {
 			new FormData(),
 		);
 		expect(res).toEqual({ id: 'd1' });
-		expect(http.mock.calls[0][1]).toMatchObject({ json: false, url: 'https://acme.cervio.app/x' });
+		expect(requestOf(http)).toMatchObject({ json: false, url: 'https://acme.cervio.app/x' });
 	});
 });

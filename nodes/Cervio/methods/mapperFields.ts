@@ -4,7 +4,6 @@ import {
 	getWriteSchema,
 	listForms,
 	RELATION_DROPDOWN_LIMIT,
-	RELATION_SEARCH_MAX_LIMIT,
 	searchRelationOptions,
 } from '../GenericFunctions';
 import {
@@ -65,9 +64,9 @@ export async function buildJunctionMapperFields(
 }
 
 /**
- * Mapper columns for a form. Single relations become a dropdown when their
- * candidates fit under RELATION_DROPDOWN_LIMIT; multi relations stay UUID arrays
- * (browse them with “Search Relation”).
+ * Mapper columns for a form. A single relation becomes a list of its records when
+ * there are fewer than RELATION_DROPDOWN_LIMIT; otherwise, and for multi-select
+ * relations, it stays a field for record IDs (found with Relation → Search).
  */
 async function mapperFieldsWithRelationOptions(
 	this: ILoadOptionsFunctions,
@@ -77,14 +76,9 @@ async function mapperFieldsWithRelationOptions(
 	mode: 'create' | 'update',
 ): Promise<ResourceMapperFields['fields']> {
 	const fields = writeSchemaToMapperFields(schema, mode);
-	const appendDescription = (field: (typeof fields)[number], text: string) => {
-		field.description = [field.description, text].filter(Boolean).join(' ');
-	};
-
 	for (const field of fields) {
 		const schemaField = schema.fields.find((f) => f.name === field.id);
-		if (!schemaField || schemaField.input.mode !== 'relation') continue;
-
+		if (schemaField?.input.mode !== 'relation' || schemaField.input.multi_select) continue;
 		let records: Array<{ id: string; label: string }>;
 		try {
 			records = await searchRelationOptions.call(
@@ -95,37 +89,11 @@ async function mapperFieldsWithRelationOptions(
 				RELATION_DROPDOWN_LIMIT,
 			);
 		} catch {
-			continue; // Keep the field as free-text UUID / array.
+			continue; // The user can still type the record ID.
 		}
-		const fitsDropdown = records.length > 0 && records.length < RELATION_DROPDOWN_LIMIT;
-
-		if (schemaField.input.multi_select) {
-			if (fitsDropdown) {
-				const preview = records
-					.slice(0, 8)
-					.map((r) => `${r.label} (${r.id})`)
-					.join('; ');
-				appendDescription(
-					field,
-					`For example: ${preview}${records.length > 8 ? '…' : ''}. To find others, use Relation → Search.`,
-				);
-			} else if (records.length >= RELATION_DROPDOWN_LIMIT) {
-				appendDescription(
-					field,
-					`${RELATION_DROPDOWN_LIMIT} or more possible records: find their IDs with Relation → Search (up to ${RELATION_SEARCH_MAX_LIMIT} per search).`,
-				);
-			}
-			continue;
-		}
-
-		if (fitsDropdown) {
+		if (records.length > 0 && records.length < RELATION_DROPDOWN_LIMIT) {
 			field.type = 'options';
 			field.options = records.map((r) => ({ name: r.label, value: r.id }));
-		} else if (records.length >= RELATION_DROPDOWN_LIMIT) {
-			appendDescription(
-				field,
-				`Too many records for a list (${RELATION_DROPDOWN_LIMIT} or more): find the ID with Relation → Search.`,
-			);
 		}
 	}
 	return fields;

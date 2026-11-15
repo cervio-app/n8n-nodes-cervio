@@ -38,10 +38,8 @@ export function assertSafeCervioBaseUrl(raw: string): string {
 		throw new Error('Cervio Base URL must not include credentials');
 	}
 
+	// http(s) URLs always have a host: `new URL` rejects them otherwise.
 	const hostname = url.hostname.toLowerCase();
-	if (!hostname) {
-		throw new Error('Cervio Base URL is missing a hostname');
-	}
 
 	if (BLOCKED_HOSTNAMES.has(hostname)) {
 		throw new Error(`Cervio Base URL host is not allowed: ${hostname}`);

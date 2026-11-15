@@ -45,9 +45,7 @@ async function sendCervioRequest(
 	try {
 		baseUrl = assertSafeCervioBaseUrl(String(credentials.baseUrl ?? ''));
 	} catch (error) {
-		throw new NodeApiError(this.getNode(), {
-			message: error instanceof Error ? error.message : String(error),
-		} as JsonObject);
+		throw new NodeApiError(this.getNode(), { message: (error as Error).message } as JsonObject);
 	}
 
 	const { path, ...rest } = options;

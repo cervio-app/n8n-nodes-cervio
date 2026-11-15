@@ -42,7 +42,7 @@
 		"smoke:extended": "node scripts/smoke-extended.mjs",
 		"verify": "node scripts/verify-node-load.mjs && node scripts/verify-community-invariants.mjs",
 		"lint": "npm run lint:tsc && npm run lint:eslint && npm run format:check",
-		"lint:tsc": "tsc --noEmit",
+		"lint:tsc": "tsc --noEmit && tsc -p tsconfig.test.json",
 		"lint:eslint": "eslint . --max-warnings 0",
 		"format": "prettier --write .",
 		"format:check": "prettier --check .",
@@ -64,6 +64,7 @@
 	"devDependencies": {
 		"@eslint/json": "^2.1.1",
 		"@n8n/eslint-plugin-community-nodes": "^1.0.1",
+		"@types/node": "^22.20.5",
 		"@vitest/coverage-v8": "^5.1.0",
 		"eslint": "^9.29.0",
 		"n8n-workflow": "^2.16.0",

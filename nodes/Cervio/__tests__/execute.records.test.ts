@@ -12,6 +12,8 @@ vi.mock('../GenericFunctions', async (importOriginal) => {
 });
 
 import { deleteRecord, updateRecord, upsertRecord, validateDraft } from '../GenericFunctions';
+import type { IExecuteFunctions } from 'n8n-workflow';
+
 import { executeCervio } from '../execute';
 
 function run(params: Record<string, unknown>, json: Record<string, unknown> = {}) {
@@ -21,7 +23,7 @@ function run(params: Record<string, unknown>, json: Record<string, unknown> = {}
 			name in params ? params[name] : fallback,
 		getNode: () => ({ name: 'Cervio', typeVersion: 2 }),
 		continueOnFail: () => false,
-	} as unknown as Parameters<typeof executeCervio>[0];
+	} as unknown as IExecuteFunctions;
 	return executeCervio.call(ctx);
 }
 

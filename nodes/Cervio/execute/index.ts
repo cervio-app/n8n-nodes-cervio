@@ -10,7 +10,7 @@ import { relationOperations } from './relations';
 import type { OperationHandler } from './types';
 import { workflowOperations } from './workflows';
 
-const OPERATIONS: Record<string, OperationHandler> = {
+export const OPERATIONS: Record<string, OperationHandler> = {
 	...recordOperations,
 	...listOperations,
 	...relationOperations,

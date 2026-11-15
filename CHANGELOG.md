@@ -29,9 +29,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **Link Records → Link Fields:** fill the other fields of the link row (e.g. year, hours) from the junction entity's create form.
-- Unit tests for every operation through mocks; coverage gate on `execute/**`.
+- Tests cover 100% of statements, branches, functions and lines of the node and credential, enforced in CI; tests are type-checked by `npm run lint`.
 
 ### Removed
+
+- Per-field hints in the resource mapper: n8n does not display them. The guidance is now in the **Fields** description.
 
 - Internal `batchOps` module and the per-resource copies of the error handling: one per-item runner handles `continueOnFail` and `pairedItem` for all operations.
 
