@@ -37,4 +37,22 @@ describe('assertSafeCervioBaseUrl', () => {
 			assertSafeCervioBaseUrl('http://metadata.google.internal/computeMetadata/v1'),
 		).toThrow(/not allowed/i);
 	});
+
+	it.each([
+		'http://[fe80::1]',
+		'http://[febf::abcd]',
+		'http://[fd00:ec2::254]',
+		'http://[::ffff:169.254.169.254]',
+		'http://2852039166',
+		'http://0xa9fea9fe',
+	])('rejects IPv6 and encoded forms of link-local / metadata: %s', (url) => {
+		expect(() => assertSafeCervioBaseUrl(url)).toThrow(/link-local|cloud-metadata/i);
+	});
+
+	it.each(['http://[::1]:3000', 'http://[fec0::1]', 'http://[::ffff:10.0.0.1]', 'http://10.0.0.5'])(
+		'keeps loopback and private addresses usable for on-prem: %s',
+		(url) => {
+			expect(assertSafeCervioBaseUrl(url)).toBe(url);
+		},
+	);
 });

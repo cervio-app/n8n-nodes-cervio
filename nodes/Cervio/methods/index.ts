@@ -12,6 +12,7 @@ import {
 	listWorkflows,
 } from '../GenericFunctions';
 import { formLabelWithRole, type WriteDiscoverySchema } from '../writeSchemaMapper';
+import { cervioApiCredentialTest } from './credentialTest';
 import { buildJunctionMapperFields, buildMapperFields } from './mapperFields';
 
 export const cervioMethods = {
@@ -133,6 +134,10 @@ export const cervioMethods = {
 				}))
 				.sort((a, b) => a.name.localeCompare(b.name, 'en'));
 		},
+	},
+
+	credentialTest: {
+		cervioApiCredentialTest,
 	},
 
 	resourceMapping: {

@@ -18,6 +18,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Editor texts rewritten for n8n users, without Cervio internals (slugs, write-schema, API paths). Renamed labels, same parameters, so existing workflows keep working: **Through Field (N:M)** → **N:M Field**, **Option Lists** → **Choice Fields**, **Relations** → **Relation Fields**, **Multi-Value Mode** → **Multi-Select Fields**, **Expected Updated At** → **Only If Unchanged Since**, **Binary Property** → **Input Binary Field**, **Record ID (entity_data_id)** → **Record ID**.
 - Source split by resource (`description/*.ts`) and by concern (`execute/parameters.ts`, `execute/workflowData.ts`, `methods/mapperFields.ts`). Code formatted with Prettier, checked in CI.
 
+### Fixed
+
+- **Security:** the Base URL check now also blocks IPv6 link-local (`fe80::/10`), the AWS IPv6 metadata address and IPv4-mapped metadata addresses (`[::ffff:169.254.169.254]`). IPv6 hosts were not matched before because URL hostnames keep their brackets.
+- **Security:** **Test credential** runs through the node and applies the same Base URL check before calling Cervio; the credential no longer declares its own unchecked test request.
+- `npm run build` empties `dist/` first, so files of removed modules are never packed.
+
 ### Added
 
 - **Link Records → Link Fields:** fill the other fields of the link row (e.g. year, hours) from the junction entity's create form.

@@ -81,10 +81,10 @@ Live API smoke scripts (`npm run smoke*`) are separate — see [CONTRIBUTING.md]
 
 Create a **Cervio API** credential in n8n:
 
-| Field                     | Example                   | Notes                                                                                                                                                              |
-| ------------------------- | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Base URL**              | `https://acme.cervio.app` | Tenant host only — required, no default. Must be `http`/`https`. Link-local / cloud-metadata hosts (`169.254.0.0/16`, `metadata.google.internal`, …) are rejected. |
-| **Personal Access Token** | `cpat_…`                  | From Cervio **Admin → API**                                                                                                                                        |
+| Field                     | Example                   | Notes                                                                                                                                                                                                                           |
+| ------------------------- | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Base URL**              | `https://acme.cervio.app` | Tenant host only — required, no default. Must be `http`/`https`. Link-local and cloud-metadata hosts (`169.254.0.0/16`, `fe80::/10`, `fd00:ec2::254`, `metadata.google.internal`, …) are rejected, also by **Test credential**. |
+| **Personal Access Token** | `cpat_…`                  | From Cervio **Admin → API**                                                                                                                                                                                                     |
 
 All operations use this credential.
 

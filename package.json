@@ -31,7 +31,8 @@
 		"node": ">=20"
 	},
 	"scripts": {
-		"build": "tsc && node scripts/copy-icons.mjs",
+		"clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\"",
+		"build": "npm run clean && tsc && node scripts/copy-icons.mjs",
 		"build:watch": "tsc --watch",
 		"test": "vitest run",
 		"test:watch": "vitest",

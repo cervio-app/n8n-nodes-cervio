@@ -76,8 +76,11 @@ export function cervioErrorMessage(error: unknown): string | undefined {
 		response?: { data?: unknown };
 		cause?: { response?: { data?: unknown } };
 		reason?: { response?: { data?: unknown } };
+		error?: unknown;
 	} | null;
-	const data = e?.response?.data ?? e?.cause?.response?.data ?? e?.reason?.response?.data;
+	// axios-style errors carry the body in response.data; `request` errors in `error`.
+	const data =
+		e?.response?.data ?? e?.cause?.response?.data ?? e?.reason?.response?.data ?? e?.error;
 	if (!data || typeof data !== 'object') return undefined;
 	const { message, error: code } = data as { message?: unknown; error?: unknown };
 	if (typeof message === 'string' && message.trim()) return message.trim();

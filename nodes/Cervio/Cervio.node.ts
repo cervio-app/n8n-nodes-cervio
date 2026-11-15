@@ -24,6 +24,7 @@ export class Cervio implements INodeType {
 			{
 				name: 'cervioApi',
 				required: true,
+				testedBy: 'cervioApiCredentialTest',
 			},
 		],
 		properties: cervioProperties,

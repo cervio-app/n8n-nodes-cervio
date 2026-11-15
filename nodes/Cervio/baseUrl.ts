@@ -2,7 +2,8 @@
 /**
  * Validate Cervio credential Base URL before any HTTP call.
  * Blocks cloud-metadata / link-local targets that would turn a misconfigured
- * PAT into an SSRF foothold. Private RFC1918 hosts stay allowed for on-prem.
+ * PAT into an SSRF foothold. Private (RFC 1918) and loopback hosts stay allowed
+ * for on-premises and local installs.
  */
 
 const BLOCKED_HOSTNAMES = new Set([
@@ -55,17 +56,37 @@ export function assertSafeCervioBaseUrl(raw: string): string {
 	return normalized;
 }
 
-function isLinkLocalOrMetadataIp(hostname: string): boolean {
-	// IPv6 link-local / unique-local metadata-ish
-	if (hostname === '::1' || hostname.startsWith('fe80:')) return true;
+/** IPv4 dotted quad → its four numbers, or undefined. WHATWG URL already turns decimal/hex hosts into dotted form. */
+function ipv4Parts(host: string): number[] | undefined {
+	const m = host.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
+	return m ? m.slice(1).map(Number) : undefined;
+}
 
-	const ipv4 = hostname.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
-	if (!ipv4) return false;
-	const parts = ipv4.slice(1).map((p) => Number(p));
-	if (parts.some((n) => n > 255)) return true;
+/** 169.254.0.0/16: link-local, including the AWS/GCP/Azure metadata address 169.254.169.254. */
+function isLinkLocalIpv4(parts: number[]): boolean {
+	return parts[0] === 169 && parts[1] === 254;
+}
 
-	const [a, b] = parts;
-	// 169.254.0.0/16 link-local (incl. AWS/GCP metadata 169.254.169.254)
-	if (a === 169 && b === 254) return true;
+/**
+ * IPv6 literal (URL hostnames keep the brackets, e.g. `[fe80::1]`). Blocks
+ * link-local fe80::/10, the AWS metadata address fd00:ec2::254, and IPv4-mapped
+ * addresses (`::ffff:169.254.169.254`, normalised by URL to `::ffff:a9fe:a9fe`).
+ */
+function isLinkLocalOrMetadataIpv6(host: string): boolean {
+	if (/^fe[89ab][0-9a-f]:/.test(host)) return true;
+	if (host === 'fd00:ec2::254') return true;
+	const mapped = host.match(/^::ffff:([0-9a-f]{1,4}):([0-9a-f]{1,4})$/);
+	if (mapped) {
+		const [hi, lo] = [parseInt(mapped[1], 16), parseInt(mapped[2], 16)];
+		return isLinkLocalIpv4([hi >> 8, hi & 255, lo >> 8, lo & 255]);
+	}
 	return false;
+}
+
+function isLinkLocalOrMetadataIp(hostname: string): boolean {
+	if (hostname.startsWith('[') && hostname.endsWith(']')) {
+		return isLinkLocalOrMetadataIpv6(hostname.slice(1, -1));
+	}
+	const parts = ipv4Parts(hostname);
+	return parts ? isLinkLocalIpv4(parts) : false;
 }

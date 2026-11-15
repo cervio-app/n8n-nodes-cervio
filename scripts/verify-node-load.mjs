@@ -35,7 +35,15 @@ const node = new Cervio();
 const cred = new CervioApi();
 
 if (cred.displayName !== 'Cervio API') throw new Error('credential displayName');
-if (!cred.test?.request?.url?.includes('/api/v1/me')) throw new Error('credential test URL');
+const credUse = node.description.credentials?.find((c) => c.name === 'cervioApi');
+if (
+	credUse?.testedBy !== 'cervioApiCredentialTest' ||
+	typeof node.methods?.credentialTest?.cervioApiCredentialTest !== 'function'
+) {
+	throw new Error('credential must be tested by the node (cervioApiCredentialTest)');
+}
+if (cred.test)
+	throw new Error('credential must not declare its own test: it would skip the Base URL check');
 
 const ver = node.description.version;
 const verArr = Array.isArray(ver) ? ver : [ver];

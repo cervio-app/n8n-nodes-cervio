@@ -1,10 +1,4 @@
-import type {
-	IAuthenticateGeneric,
-	Icon,
-	ICredentialTestRequest,
-	ICredentialType,
-	INodeProperties,
-} from 'n8n-workflow';
+import type { IAuthenticateGeneric, Icon, ICredentialType, INodeProperties } from 'n8n-workflow';
 
 export class CervioApi implements ICredentialType {
 	name = 'cervioApi';
@@ -48,13 +42,6 @@ export class CervioApi implements ICredentialType {
 				Accept: 'application/json',
 				Authorization: '=Bearer {{$credentials.apiKey}}',
 			},
-		},
-	};
-
-	test: ICredentialTestRequest = {
-		request: {
-			baseURL: '={{$credentials.baseUrl}}',
-			url: '/api/v1/me',
 		},
 	};
 }
