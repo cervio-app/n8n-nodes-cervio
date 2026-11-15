@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-11-15
+
 ### Changed
 
 - **Breaking:** **Unlink Records** removes one N:M link row by **Link ID** (`DELETE …/links` body `{ from_record_id, junction_record_id }`), matching Cervio's links API. The old *Far Record ID* input on Unlink is gone: Cervio no longer unlinks by record pair.
@@ -117,7 +119,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Scoped package `@cervio/n8n-nodes-cervio`; unscoped name deprecated.
 
-[Unreleased]: https://github.com/cervio-app/n8n-nodes-cervio/compare/v0.2.6...HEAD
+[Unreleased]: https://github.com/cervio-app/n8n-nodes-cervio/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/cervio-app/n8n-nodes-cervio/releases/tag/v0.3.0
 [0.2.6]: https://github.com/cervio-app/n8n-nodes-cervio/releases/tag/v0.2.6
 [0.2.5]: https://github.com/cervio-app/n8n-nodes-cervio/releases/tag/v0.2.5
 [0.2.4]: https://github.com/cervio-app/n8n-nodes-cervio/releases/tag/v0.2.4
