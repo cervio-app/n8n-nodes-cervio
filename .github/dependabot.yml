@@ -2,18 +2,20 @@ version: 2
 updates:
   - package-ecosystem: npm
     directory: /
+    target-branch: develop
     schedule:
       interval: weekly
     open-pull-requests-limit: 10
-    labels:
-      - dependencies
-    # Keep majors that break peers out of the queue until the ecosystem catches up:
+    # Keep majors that break peers / CI Node out of the queue until the ecosystem catches up:
     # - typescript-eslint 8.x requires typescript < 6.1
     # - @n8n/eslint-plugin-community-nodes peers eslint@9.29.0
+    # - @types/node majors follow Node versions; CI and engines stay on Node 22
     ignore:
       - dependency-name: typescript
         update-types: ['version-update:semver-major']
       - dependency-name: eslint
+        update-types: ['version-update:semver-major']
+      - dependency-name: '@types/node'
         update-types: ['version-update:semver-major']
     groups:
       eslint-stack:
@@ -30,11 +32,10 @@ updates:
 
   - package-ecosystem: github-actions
     directory: /
+    target-branch: develop
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
-    labels:
-      - dependencies
     groups:
       github-actions:
         patterns:

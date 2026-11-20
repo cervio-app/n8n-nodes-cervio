@@ -5,19 +5,10 @@
 import type { IDataObject, ResourceMapperField } from 'n8n-workflow';
 
 export type WriteDiscoveryValueShape =
-	| 'string'
-	| 'number'
-	| 'boolean'
-	| 'uuid'
-	| 'uuid[]'
-	| 'string[]';
+	'string' | 'number' | 'boolean' | 'uuid' | 'uuid[]' | 'string[]';
 
 export type WriteDiscoveryInputMode =
-	| 'none'
-	| 'boolean'
-	| 'fixed_list'
-	| 'remote_options'
-	| 'relation';
+	'none' | 'boolean' | 'fixed_list' | 'remote_options' | 'relation';
 
 export type WriteDiscoveryOption = { value: string; label: string };
 
