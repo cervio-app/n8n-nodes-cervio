@@ -7,6 +7,25 @@ import { check, equal, output } from './harness.mjs';
 
 const BLOCKED = /link-local|cloud-metadata/;
 
+function buildValidatedUrl(baseUrl) {
+	try {
+		if (baseUrl.includes('/../') || /\/%2e%2e\//i.test(baseUrl)) {
+			throw new Error('Invalid path');
+		}
+		const url = new URL(baseUrl);
+		const allowedDomains = ['example.com']; // add your allowed domains here
+		if (!allowedDomains.includes(url.hostname)) {
+			throw new Error('Invalid host');
+		}
+		if (!['http:', 'https:'].includes(url.protocol)) {
+			throw new Error('Invalid protocol');
+		}
+		return url.href;
+	} catch {
+		throw new Error('Invalid URL');
+	}
+}
+
 export async function runCases({ suite, n8n, cervio, credential, fx, config, owner }) {
 	const { test } = suite;
 	const node = (name, parameters, extra = {}) => ({
@@ -590,7 +609,7 @@ export async function runCases({ suite, n8n, cervio, credential, fx, config, own
 	await test('E4', 'Open: the download link returns the same file', '-', async () => {
 		const url = output(documents, 'Open')[0].json.signed_url;
 		check(url, 'no link');
-		equal(await (await fetch(url)).text(), content, 'content');
+		equal(await (await fetch(buildValidatedUrl(url))).text(), content, 'content');
 	});
 	await test(
 		'E5',
