@@ -1,0 +1,66 @@
+{
+	"$schema": "https://docs.renovatebot.com/renovate-schema.json",
+	"extends": ["config:recommended", "helpers:pinGitHubActionDigests"],
+	"baseBranchPatterns": ["develop"],
+	"timezone": "Europe/Rome",
+	"schedule": ["before 9am on Monday"],
+	"prConcurrentLimit": 5,
+	"minimumReleaseAge": "3 days",
+	"packageRules": [
+		{
+			"description": "Supply chain: a new version waits 3 days before it is proposed (most compromised releases are pulled within hours). Same rule as cervio-devkit.",
+			"matchDatasources": ["npm"],
+			"minimumReleaseAge": "3 days"
+		},
+		{
+			"matchManagers": ["npm"],
+			"matchUpdateTypes": ["minor", "patch"],
+			"groupName": "all minor and patch"
+		},
+		{
+			"description": "Lint toolchain moves together (was the Dependabot eslint-stack group).",
+			"matchPackageNames": [
+				"eslint",
+				"@eslint/**",
+				"typescript-eslint",
+				"@typescript-eslint/**",
+				"@n8n/eslint-plugin-community-nodes"
+			],
+			"groupName": "eslint stack"
+		},
+		{
+			"description": "Test toolchain moves together (was the Dependabot test-stack group).",
+			"matchPackageNames": ["vitest", "@vitest/**"],
+			"groupName": "test stack"
+		},
+		{
+			"matchManagers": ["github-actions"],
+			"groupName": "github actions"
+		},
+		{
+			"matchUpdateTypes": ["major"],
+			"dependencyDashboardApproval": true
+		},
+		{
+			"description": "@n8n/eslint-plugin-community-nodes peers eslint 9: no eslint 10 until the plugin supports it.",
+			"matchPackageNames": ["eslint"],
+			"allowedVersions": "<10.0.0"
+		},
+		{
+			"description": "typescript-eslint 8.x requires typescript < 6.1: stay on 5.x until the lint stack catches up.",
+			"matchPackageNames": ["typescript"],
+			"allowedVersions": "<6.0.0"
+		},
+		{
+			"description": "CI and publish run on Node 22: keep the types on 22 so the node never uses newer APIs.",
+			"matchPackageNames": ["@types/node"],
+			"allowedVersions": "<23.0.0"
+		},
+		{
+			"description": "The Node version in CI and publish follows the n8n runtime, changed by hand.",
+			"matchManagers": ["github-actions"],
+			"matchDepNames": ["node"],
+			"enabled": false
+		}
+	]
+}
