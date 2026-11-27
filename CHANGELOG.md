@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Dependency updates come from Renovate (`renovate.json`): PRs on `develop` on Monday mornings, majors after approval in the Dependency Dashboard. Dependabot version updates are removed; Dependabot security alerts stay on.
+
 ## [0.3.0] - 2026-11-15
 
 ### Changed
